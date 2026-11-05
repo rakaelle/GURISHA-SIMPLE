@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GURISHA SIMPLE — Gestion du stock</title>
+<style>
+:root{--g:#198754;--gd:#126b42;--gl:#e8f5ed;--bg:#f4f8f5;--bd:#dce7df;--tx:#26372d;--red:#dc3545}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--tx)}
+header{background:var(--g);color:#fff;text-align:center;padding:20px}header h1{margin:0;letter-spacing:2px}header p{margin:6px 0 0;font-size:13px}
+main{max-width:1500px;margin:auto;padding:16px}.toolbar{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px}
+button{border:0;border-radius:7px;padding:10px 13px;cursor:pointer;font-weight:bold;font-size:13px}
+.green{background:var(--g);color:white}.light{background:var(--gl);color:var(--gd)}.gray{background:#e9ecef;color:#333}.red{background:#fde8e8;color:var(--red)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}.card{background:#fff;border:1px solid var(--bd);border-radius:9px;padding:14px}.card small{display:block;color:#718078;margin-bottom:7px}.card strong{color:var(--gd);font-size:18px}
+#search{width:100%;padding:12px;border:1px solid var(--bd);border-radius:8px;margin-bottom:15px;font-size:14px}
+.group{background:#fff;border:1px solid var(--bd);border-radius:10px;margin-bottom:18px;overflow:hidden}.grouphead{background:var(--gl);padding:13px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.grouphead h2{font-size:15px;margin:0;color:var(--gd)}.muted{font-size:12px;color:#607268}
+.tablewrap{overflow-x:auto}table{width:100%;min-width:1150px;border-collapse:collapse;font-size:12px}th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #edf1ee;white-space:nowrap}th{background:#f8faf8;color:#53645a}td .sub{display:block;font-size:11px;color:#7a887f;margin-top:4px}.actions{display:flex;gap:5px}.actions button{padding:7px 8px;font-size:11px}.stock{font-weight:bold;color:var(--gd)}.zero{color:var(--red);font-weight:bold}.empty{text-align:center;padding:25px;color:#718078}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:center;justify-content:center;padding:12px}.modal.show{display:flex}.panel{background:#fff;border-radius:12px;padding:20px;width:100%;max-width:490px;max-height:92vh;overflow:auto}.panel h2{margin:0 0 16px;color:var(--gd);font-size:20px}
+.field{margin-bottom:12px}.field label{display:block;font-weight:bold;font-size:13px;margin-bottom:5px}.field input,.field select{width:100%;padding:11px;border:1px solid var(--bd);border-radius:7px;font-size:14px}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.buttons{display:flex;gap:8px;margin-top:16px}.buttons button{flex:1}.hint{background:var(--gl);padding:10px;border-radius:7px;font-size:12px;color:var(--gd)}
+footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
+@media(max-width:600px){main{padding:10px}.toolbar button{flex:1 1 45%}.two{grid-template-columns:1fr}header h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header><h1>GURISHA</h1><p>Gestion des stocks, achats et ventes</p></header>
+<main>
+<div class="cards">
+<div class="card"><small>Articles</small><strong id="nArticles">0</strong></div>
+<div class="card"><small>Stock disponible</small><strong id="nStock">0</strong></div>
+<div class="card"><small>Quantité vendue</small><strong id="nSold">0</strong></div>
+<div class="card"><small>Total des ventes</small><strong id="nSales">0 FBu</strong></div>
+</div>
+<div class="toolbar">
+<button class="green" onclick="openProduct()">+ Ajouter un article</button>
+<button class="light" onclick="openCategory()">+ Ajouter une catégorie</button>
+<button class="light" onclick="exportCSV()">Exporter CSV</button>
+</div>
+<input id="search" placeholder="Rechercher un article..." oninput="render()">
+<div id="inventory"></div>
+</main>
+<footer>GURISHA SIMPLE — Les données de cette version sont enregistrées dans ce navigateur.</footer>
+
+<div class="modal" id="productModal"><div class="panel">
+<h2 id="productTitle">Ajouter un article</h2>
+<form id="productForm">
+<div class="field"><label>Nom de l'article</label><input id="name" required placeholder="Ex. Fanta"></div>
+<div class="two">
+<div class="field"><label>Format / contenance</label><input id="format" placeholder="Ex. 30cl"></div>
+<div class="field"><label>Type de contenant</label><input id="container" placeholder="Ex. Bouteille"></div>
+</div>
+<div class="field"><label>Catégorie</label><select id="category" required></select></div>
+<div class="field"><label>Quantité initiale</label><input id="initial" type="number" min="0" step="1" value="0" required></div>
+<div class="two">
+<div class="field"><label>Lot A — stock actif</label><input id="lotA" type="number" min="0" step="1" value="0" required></div>
+<div class="field"><label>Lot B — réserve</label><input id="lotB" type="number" min="0" step="1" value="0" required></div>
+</div>
+<div class="field"><label>Prix d'achat unitaire (FBu)</label><input id="buyPrice" type="number" min="0" step="1" value="0" required></div>
+<div class="field"><label>Prix de vente unitaire (FBu)</label><input id="sellPrice" type="number" min="0" step="1" value="0" required></div>
+<div class="hint">Le Lot A est consommé en premier. Quand il est épuisé, le Lot B devient automatiquement le Lot A.</div>
+<div class="buttons"><button type="button" class="gray" onclick="closeModal('productModal')">Annuler</button><button class="green">Enregistrer</button></div>
+</form></div></div>
+
+<div class="modal" id="saleModal"><div class="panel">
+<h2>Enregistrer une vente</h2><div class="hint" id="saleInfo"></div>
+<form id="saleForm">
+<div class="field"><label>Quantité vendue</label><input id="saleQty" type="number" min="1" step="1" required></div>
+<div class="field"><label>Prix de vente unitaire (FBu)</label><input id="salePrice" type="number" min="0" step="1" required></div>
+<div class="field"><label>Total de la vente</label><input id="saleTotal" readonly></div>
+<div class="buttons"><button type="button" class="gray" onclick="closeModal('saleModal')">Annuler</button><button class="green">Enregistrer la vente</button></div>
+</form></div></div>
+
+<div class="modal" id="lotModal"><div class="panel">
+<h2>Ajouter au Lot B</h2><div class="hint" id="lotInfo"></div>
+<form id="lotForm"><div class="field"><label>Quantité ajoutée</label><input id="lotQty" type="number" min="1" step="1" required></div>
+<div class="buttons"><button type="button" class="gray" onclick="closeModal('lotModal')">Annuler</button><button class="green">Ajouter au Lot B</button></div></form>
+</div></div>
+
+<div class="modal" id="categoryModal"><div class="panel">
+<h2>Ajouter une catégorie</h2><form id="categoryForm">
+<div class="field"><label>Nom de la catégorie</label><input id="categoryName" required placeholder="Ex. Boissons"></div>
+<div class="buttons"><button type="button" class="gray" onclick="closeModal('categoryModal')">Annuler</button><button class="green">Ajouter</button></div>
+</form></div></div>
+
+<script>
+const KEY='gurisha_simple_v1';
+const defaultCategories=['BOISSONS & BRASSERIE','ALIMENTATION','HYGIÈNE','DIVERS'];
+const defaultProducts=[
+{id:1,name:'Amstel',format:'65cl',container:'Bouteille',category:'BOISSONS & BRASSERIE',initial:12,lotA:12,lotB:0,sold:0,buyPrice:5000,sellPrice:6000,salesTotal:0},
+{id:2,name:'Primus',format:'65cl',container:'Bouteille',category:'BOISSONS & BRASSERIE',initial:12,lotA:12,lotB:0,sold:0,buyPrice:3500,sellPrice:4500,salesTotal:0},
+{id:3,name:'Fanta',format:'30cl',container:'Bouteille',category:'BOISSONS & BRASSERIE',initial:24,lotA:24,lotB:0,sold:0,buyPrice:1800,sellPrice:2500,salesTotal:0},
+{id:4,name:'Biscuits',format:'Paquet',container:'Sachet',category:'ALIMENTATION',initial:20,lotA:20,lotB:0,sold:0,buyPrice:1200,sellPrice:2000,salesTotal:0},
+{id:5,name:'Savon',format:'Unité',container:'Pièce',category:'HYGIÈNE',initial:15,lotA:15,lotB:0,sold:0,buyPrice:2000,sellPrice:3000,salesTotal:0}
+];
+let categories=defaultCategories.slice(),products=defaultProducts.slice(),editingId=null,saleId=null,lotId=null;
+function save(){localStorage.setItem(KEY,JSON.stringify({categories:categories,products:products}));}
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x){if(Array.isArray(x.categories))categories=x.categories;if(Array.isArray(x.products))products=x.products;}}catch(e){console.error(e);}
+products.forEach(p=>{if(p.buyPrice===undefined)p.buyPrice=0;if(p.salesTotal===undefined)p.salesTotal=0;if(p.sold===undefined)p.sold=0;if(p.lotA===undefined)p.lotA=0;if(p.lotB===undefined)p.lotB=0;});}
+function money(n){return (Number(n)||0).toLocaleString('fr-FR')+' FBu';}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function stock(p){return Number(p.lotA||0)+Number(p.lotB||0);}
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function fillCategories(){document.getElementById('category').innerHTML=categories.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');}
+function render(){
+const q=document.getElementById('search').value.toLowerCase().trim(),root=document.getElementById('inventory');root.innerHTML='';
+const visible=products.filter(p=>([p.name,p.format,p.container,p.category].join(' ').toLowerCase()).includes(q));
+categories.forEach(cat=>{
+const list=visible.filter(p=>p.category===cat);if(!list.length)return;
+const section=document.createElement('section');section.className='group';
+const sum=list.reduce((a,p)=>a+Number(p.salesTotal||0),0),qty=list.reduce((a,p)=>a+stock(p),0);
+let rows=list.map(p=>'<tr><td><b>'+esc(p.name)+'</b><span class="sub">'+esc(p.format||'')+(p.container?' • '+esc(p.container):'')+'</span></td>'+
+'<td>'+Number(p.initial||0)+'</td><td class="'+(p.lotA?'stock':'zero')+'">'+Number(p.lotA||0)+'</td><td>'+Number(p.lotB||0)+'</td>'+
+'<td class="'+(stock(p)?'stock':'zero')+'">'+stock(p)+'</td><td>'+Number(p.sold||0)+'</td>'+
+'<td>'+money(p.buyPrice)+'</td><td>'+money(p.sellPrice)+'</td><td><b>'+money(p.salesTotal)+'</b></td>'+
+'<td><div class="actions"><button class="green" onclick="openSale('+p.id+')">Vendre</button><button class="light" onclick="openLot('+p.id+')">+ Lot B</button><button class="gray" onclick="editProduct('+p.id+')">Modifier</button><button class="red" onclick="deleteProduct('+p.id+')">Supprimer</button></div></td></tr>').join('');
+section.innerHTML='<div class="grouphead"><h2>'+esc(cat)+'</h2><span class="muted">'+list.length+' article(s) · Stock : '+qty+' · Ventes : '+money(sum)+'</span></div>'+
+'<div class="tablewrap"><table><thead><tr><th>ARTICLES</th><th>QUANTITÉ INITIALE</th><th>LOT A</th><th>LOT B</th><th>STOCK TOTAL</th><th>QUANTITÉ VENDUE</th><th>PRIX D’ACHAT UNITAIRE</th><th>PRIX DE VENTE UNITAIRE</th><th>TOTAL VENTES</th><th>ACTIONS</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+root.appendChild(section);
+});
+if(!visible.length)root.innerHTML='<div class="empty">Aucun article trouvé.</div>';
+document.getElementById('nArticles').textContent=products.length;
+document.getElementById('nStock').textContent=products.reduce((a,p)=>a+stock(p),0);
+document.getElementById('nSold').textContent=products.reduce((a,p)=>a+Number(p.sold||0),0);
+document.getElementById('nSales').textContent=money(products.reduce((a,p)=>a+Number(p.salesTotal||0),0));
+}
+function openProduct(){editingId=null;document.getElementById('productForm').reset();document.getElementById('productTitle').textContent='Ajouter un article';fillCategories();['initial','lotA','lotB','buyPrice','sellPrice'].forEach(id=>document.getElementById(id).value=0);openModal('productModal');}
+function editProduct(id){const p=products.find(x=>x.id===id);if(!p)return;editingId=id;fillCategories();document.getElementById('productTitle').textContent='Modifier l’article';
+[['name','name'],['format','format'],['container','container'],['category','category'],['initial','initial'],['lotA','lotA'],['lotB','lotB'],['buyPrice','buyPrice'],['sellPrice','sellPrice']].forEach(pair=>document.getElementById(pair[0]).value=p[pair[1]]==null?'':p[pair[1]]);
+openModal('productModal');}
+document.getElementById('productForm').addEventListener('submit',e=>{
+e.preventDefault();const v=id=>document.getElementById(id).value.trim(),n=id=>Number(document.getElementById(id).value);
+const name=v('name'),initial=n('initial'),a=n('lotA'),b=n('lotB'),buy=n('buyPrice'),sell=n('sellPrice');
+if(!name||![initial,a,b].every(x=>Number.isInteger(x)&&x>=0)||a+b>initial||![buy,sell].every(x=>Number.isFinite(x)&&x>=0)){alert('Vérifiez le nom, les quantités et les prix. Les lots A et B ne peuvent pas dépasser la quantité initiale.');return;}
+const data={name:name,format:v('format'),container:v('container'),category:v('category'),initial:initial,lotA:a,lotB:b,buyPrice:buy,sellPrice:sell};
+if(editingId!==null){const p=products.find(x=>x.id===editingId);Object.assign(p,data);}else{products.push(Object.assign({id:Date.now(),sold:0,salesTotal:0},data));}
+save();render();closeModal('productModal');
+});
+function deleteProduct(id){const p=products.find(x=>x.id===id);if(p&&confirm('Supprimer définitivement '+p.name+' ?')){products=products.filter(x=>x.id!==id);save();render();}}
+function openCategory(){document.getElementById('categoryForm').reset();openModal('categoryModal');}
+document.getElementById('categoryForm').addEventListener('submit',e=>{e.preventDefault();const c=document.getElementById('categoryName').value.trim();if(!c)return;if(categories.some(x=>x.toLowerCase()===c.toLowerCase())){alert('Cette catégorie existe déjà.');return;}categories.push(c);save();fillCategories();render();closeModal('categoryModal');});
+function openSale(id){const p=products.find(x=>x.id===id);if(!p)return;saleId=id;document.getElementById('saleInfo').textContent=p.name+' — stock disponible : '+stock(p);document.getElementById('saleQty').value='';document.getElementById('saleQty').max=stock(p);document.getElementById('salePrice').value=p.sellPrice;calcSale();openModal('saleModal');}
+function calcSale(){document.getElementById('saleTotal').value=money(Number(document.getElementById('saleQty').value)*Number(document.getElementById('salePrice').value));}
+document.getElementById('saleQty').addEventListener('input',calcSale);document.getElementById('salePrice').addEventListener('input',calcSale);
+document.getElementById('saleForm').addEventListener('submit',e=>{e.preventDefault();const p=products.find(x=>x.id===saleId);if(!p)return;const q=Number(document.getElementById('saleQty').value),price=Number(document.getElementById('salePrice').value);if(!Number.isInteger(q)||q<1||q>stock(p)||!Number.isFinite(price)||price<0){alert('Quantité ou prix invalide. Vérifiez le stock disponible.');return;}
+let remaining=q,fromA=Math.min(Number(p.lotA||0),remaining);p.lotA-=fromA;remaining-=fromA;if(remaining>0)p.lotB-=remaining;if(p.lotA===0&&p.lotB>0){p.lotA=p.lotB;p.lotB=0;}p.sold=Number(p.sold||0)+q;p.salesTotal=Number(p.salesTotal||0)+q*price;save();render();closeModal('saleModal');});
+function openLot(id){const p=products.find(x=>x.id===id);if(!p)return;lotId=id;document.getElementById('lotInfo').textContent=p.name+' — Lot A : '+p.lotA+' | Lot B : '+p.lotB;document.getElementById('lotQty').value='';openModal('lotModal');}
+document.getElementById('lotForm').addEventListener('submit',e=>{e.preventDefault();const p=products.find(x=>x.id===lotId),q=Number(document.getElementById('lotQty').value);if(!p)return;if(!Number.isInteger(q)||q<1){alert('Saisissez une quantité positive.');return;}p.lotB=Number(p.lotB||0)+q;save();render();closeModal('lotModal');});
+function exportCSV(){const data=[['Catégorie','Article','Format','Contenant','Quantité initiale','Lot A','Lot B','Stock total','Quantité vendue','Prix achat unitaire','Prix vente unitaire','Total ventes']];products.forEach(p=>data.push([p.category,p.name,p.format||'',p.container||'',p.initial||0,p.lotA||0,p.lotB||0,stock(p),p.sold||0,p.buyPrice||0,p.sellPrice||0,p.salesTotal||0]));const csv='\uFEFF'+data.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='GURISHA_STOCK.csv';a.click();URL.revokeObjectURL(url);}
+load();fillCategories();render();
+</script>
+</body>
+</html>
