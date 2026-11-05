@@ -53,12 +53,17 @@ Deno.serve(async (req) => {
 
     // Employee PIN login: the PIN is never stored in the browser or database.
     if (action === "login") {
-      const shopId = String(body.shop_id || "");
+      const shopCode = String(body.shop_code || "").trim().toUpperCase();
       const name = String(body.name || "").trim();
       const pin = String(body.pin || "");
-      if (!shopId || !name || !/^\d{6}$/.test(pin)) {
-        return json({ error: "Boutique, nom et code PIN à 6 chiffres requis." }, 400);
+      if (!/^[A-F0-9]{8}$/.test(shopCode) || !name || !/^\\d{6}$/.test(pin)) {
+        return json({ error: "Code boutique, nom et code PIN à 6 chiffres requis." }, 400);
       }
+      const { data: shop, error: shopLookupError } = await admin
+        .from("shops").select("id").eq("login_code", shopCode).maybeSingle();
+      if (shopLookupError) throw shopLookupError;
+      if (!shop) return json({ error: "Code boutique invalide." }, 401);
+      const shopId = shop.id;
 
       const loginKey = await hmacHex(pepper, `${shopId}|${name.toLocaleLowerCase()}`);
       const { data: locked, error: lockError } = await admin.rpc("gurisha_pin_is_locked", {
@@ -131,6 +136,14 @@ Deno.serve(async (req) => {
     if (ownerError) throw ownerError;
     if (ownerMembership?.role !== "owner") {
       return json({ error: "Seul le propriétaire peut gérer les employés." }, 403);
+    }
+
+    if (action === "get_shop_code") {
+      const { data: shop, error: shopCodeError } = await admin
+        .from("shops").select("login_code").eq("id", shopId).maybeSingle();
+      if (shopCodeError) throw shopCodeError;
+      if (!shop?.login_code) throw new Error("Code boutique non configuré. Exécutez la migration SQL.");
+      return json({ login_code: shop.login_code });
     }
 
     if (action === "list") {
