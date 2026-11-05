@@ -9,22 +9,56 @@
 .wrap{width:100%;max-width:470px}.brand{text-align:center;margin-bottom:20px}.logo{width:62px;height:62px;margin:auto auto 12px;border-radius:19px;background:var(--g);color:white;display:grid;place-items:center;font-size:26px;font-weight:800}.brand h1{margin:0;color:var(--gd);letter-spacing:3px;font-size:25px}.brand p{color:var(--muted);font-size:13px}
 .card{background:white;border:1px solid var(--line);border-radius:18px;padding:25px;box-shadow:0 18px 50px #174d2a12}.card h2{margin:0 0 7px;font-size:21px}.intro{margin:0 0 20px;color:var(--muted);font-size:13px;line-height:1.5}
 .field{margin-bottom:14px}label{display:block;font-weight:700;font-size:13px;margin-bottom:7px}input{width:100%;height:46px;border:1px solid var(--line);border-radius:9px;padding:0 12px;font-size:14px;outline:none}input:focus{border-color:var(--g);box-shadow:0 0 0 3px #19875418}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{width:100%;height:49px;border:0;border-radius:10px;background:var(--g);color:white;font-weight:700;font-size:15px;margin-top:6px;cursor:pointer}.note{margin-top:16px;padding:12px;border-radius:9px;background:var(--soft);color:var(--gd);font-size:12px;line-height:1.5}.links{text-align:center;margin-top:17px;font-size:13px}.links a{color:var(--gd);font-weight:700;text-decoration:none}.foot{text-align:center;color:#829087;font-size:11px;margin-top:18px}.demo{background:#fff5e9;color:#85531b}
+button{width:100%;height:49px;border:0;border-radius:10px;background:var(--g);color:white;font-weight:700;font-size:15px;margin-top:6px;cursor:pointer}button:disabled{opacity:.65;cursor:wait}
+.note{margin-top:16px;padding:12px;border-radius:9px;background:var(--soft);color:var(--gd);font-size:12px;line-height:1.5}.status{display:none;margin-top:14px;padding:12px;border-radius:9px;font-size:13px;line-height:1.5}.status.show{display:block}.status.ok{background:#e8f5ed;color:#126b42}.status.err{background:#fdeaea;color:#a52b35}
+.links{text-align:center;margin-top:17px;font-size:13px}.links a{color:var(--gd);font-weight:700;text-decoration:none}.foot{text-align:center;color:#829087;font-size:11px;margin-top:18px}
 @media(max-width:430px){.two{grid-template-columns:1fr}.card{padding:20px}}
 </style></head>
 <body><div class="wrap">
 <div class="brand"><div class="logo">G</div><h1>GURISHA</h1><p>Création de l'espace de votre boutique</p></div>
 <main class="card"><h2>Créer le compte propriétaire</h2><p class="intro">Cette inscription permet au propriétaire de créer et de gérer l'espace GURISHA de sa boutique.</p>
 <form id="ownerForm">
-<div class="field"><label for="shop">Nom de la boutique</label><input id="shop" placeholder="Ex. Gurisha Boutique" required></div>
-<div class="field"><label for="owner">Nom complet du propriétaire</label><input id="owner" autocomplete="name" placeholder="Votre nom complet" required></div>
+<div class="field"><label for="shop">Nom de la boutique</label><input id="shop" autocomplete="organization" placeholder="Ex. Gurisha Boutique" required maxlength="100"></div>
+<div class="field"><label for="owner">Nom complet du propriétaire</label><input id="owner" autocomplete="name" placeholder="Votre nom complet" required maxlength="100"></div>
 <div class="field"><label for="email">Adresse e-mail</label><input id="email" type="email" autocomplete="email" placeholder="vous@exemple.com" required></div>
 <div class="two"><div class="field"><label for="password">Mot de passe</label><input id="password" type="password" minlength="8" autocomplete="new-password" placeholder="8 caractères minimum" required></div>
 <div class="field"><label for="confirm">Confirmer le mot de passe</label><input id="confirm" type="password" minlength="8" autocomplete="new-password" placeholder="Répéter le mot de passe" required></div></div>
-<button type="submit">Créer mon espace GURISHA</button></form>
-<div class="note">🔐 Le propriétaire sera l'administrateur principal. Il pourra ensuite créer les accès des gestionnaires et des caissiers. Ne partagez jamais votre mot de passe.</div>
+<button id="submitBtn" type="submit">Créer mon espace GURISHA</button></form>
+<div id="status" class="status" role="status" aria-live="polite"></div>
+<div class="note">🔐 Le propriétaire sera l'administrateur principal. Après confirmation de l'adresse e-mail, il pourra accéder à son espace. Ne partagez jamais votre mot de passe.</div>
 <div class="links">Vous avez déjà un compte ? <a href="connexion.html">Se connecter</a></div>
 </main><div class="foot">GURISHA SIMPLE · Espace propriétaire</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script>
-document.getElementById('ownerForm').addEventListener('submit',function(e){e.preventDefault();if(document.getElementById('password').value!==document.getElementById('confirm').value){alert('Les deux mots de passe ne correspondent pas.');return;}alert('Aperçu uniquement : le formulaire sera relié à Supabase avant de créer un vrai compte. Aucun mot de passe n’a été enregistré.');});
+const form=document.getElementById('ownerForm'),btn=document.getElementById('submitBtn'),statusBox=document.getElementById('status');
+function showStatus(message,type){statusBox.textContent=message;statusBox.className='status show '+type;}
+form.addEventListener('submit',async function(e){
+ e.preventDefault();
+ const shop=document.getElementById('shop').value.trim(),owner=document.getElementById('owner').value.trim(),email=document.getElementById('email').value.trim(),password=document.getElementById('password').value,confirm=document.getElementById('confirm').value;
+ if(password!==confirm){showStatus('Les deux mots de passe ne correspondent pas.','err');return;}
+ if(password.length<8){showStatus('Le mot de passe doit contenir au moins 8 caractères.','err');return;}
+ if(!window.supabase||!window.GURISHA_SUPABASE_URL||window.GURISHA_SUPABASE_URL.includes('COLLER_ICI')||!window.GURISHA_SUPABASE_KEY||window.GURISHA_SUPABASE_KEY.includes('COLLER_ICI')){
+  showStatus('La connexion Supabase doit encore être configurée. Ouvrez le fichier supabase-config.js dans GitHub et ajoutez le Project URL et la Publishable key.','err');return;
+ }
+ btn.disabled=true;btn.textContent='Création du compte…';
+ try{
+  const client=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
+  const {data,error}=await client.auth.signUp({
+   email,password,
+   options:{emailRedirectTo:window.location.origin+'/connexion.html?confirmed=1',data:{shop_name:shop,owner_name:owner,account_type:'owner'}}
+  });
+  if(error)throw error;
+  if(data.session){
+   const {error:shopError}=await client.rpc('create_shop_for_current_user',{p_name:shop});
+   if(shopError)throw shopError;
+   showStatus('Votre compte et votre boutique ont été créés. Vous allez être redirigé vers la connexion.','ok');
+   setTimeout(()=>window.location.href='connexion.html',1200);
+  }else{
+   showStatus('Votre demande d’inscription est enregistrée. Consultez votre boîte e-mail et cliquez sur le lien de confirmation envoyé par Supabase. Après confirmation, revenez sur cette page de connexion pour terminer la création de votre boutique.','ok');
+   form.reset();
+  }
+ }catch(err){showStatus('Impossible de créer le compte : '+(err.message||'erreur inconnue'),'err');}
+ finally{btn.disabled=false;btn.textContent='Créer mon espace GURISHA';}
+});
 </script></body></html>
