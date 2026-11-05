@@ -1,0 +1,3 @@
+# Supabase CLI configuration for GURISHA SIMPLE
+[functions.gurisha-staff]
+verify_jwt = false
