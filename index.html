@@ -6,7 +6,7 @@
 <title>GURISHA SIMPLE — Gestion du stock</title>
 <style>
 :root{--g:#198754;--gd:#126b42;--gl:#e8f5ed;--bg:#f4f8f5;--bd:#dce7df;--tx:#26372d;--red:#dc3545}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--tx)}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--tx);visibility:hidden}
 header{background:var(--g);color:#fff;text-align:center;padding:20px}header h1{margin:0;letter-spacing:2px}header p{margin:6px 0 0;font-size:13px}
 .app-header{position:relative}
 .profile-link{position:absolute;right:18px;top:16px;width:38px;height:38px;display:grid;place-items:center;border:1px solid #ffffff75;border-radius:50%;color:#fff;text-decoration:none;font-size:19px;background:#ffffff18}
@@ -29,7 +29,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 </head>
 <body>
 <header class="app-header">
-<a class="profile-link" href="connexion.html" title="Connexion / Profil" aria-label="Connexion ou profil"><span aria-hidden="true">👤</span></a>
+<button class="profile-link" id="profileButton" type="button" title="Mon profil" aria-label="Mon profil"><span aria-hidden="true">👤</span></button>
 <h1>GURISHA</h1><p>Gestion des stocks, achats et ventes</p>
 <a class="admin-link" id="adminLink" href="administration.html" hidden>Administration</a>
 </header>
@@ -49,6 +49,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <div id="inventory"></div>
 </main>
 <footer>GURISHA SIMPLE — Les données de cette version sont enregistrées dans ce navigateur.</footer>
+<div class="modal" id="profileModal"><div class="panel"><h2>Mon profil</h2><p id="profileEmail" class="hint"></p><div class="buttons"><button type="button" class="gray" onclick="closeModal('profileModal')">Fermer</button><button type="button" class="red" id="logoutButton">Se déconnecter</button></div></div></div>
 
 <div class="modal" id="productModal"><div class="panel">
 <h2 id="productTitle">Ajouter un article</h2>
@@ -91,6 +92,30 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <div class="buttons"><button type="button" class="gray" onclick="closeModal('categoryModal')">Annuler</button><button class="green">Ajouter</button></div>
 </form></div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+const authClient = window.supabase.createClient(window.GURISHA_SUPABASE_URL, window.GURISHA_SUPABASE_KEY);
+(async function verifySignedInUser(){
+  try {
+    const {data:{session},error} = await authClient.auth.getSession();
+    if(error || !session){ window.location.replace('connexion.html'); return; }
+    document.getElementById('profileEmail').textContent = session.user.email || 'Compte connecté';
+    document.getElementById('profileButton').addEventListener('click',()=>openModal('profileModal'));
+    document.getElementById('logoutButton').addEventListener('click',async()=>{
+      const {error:logoutError}=await authClient.auth.signOut();
+      if(logoutError){alert('Déconnexion impossible : '+logoutError.message);return;}
+      window.location.replace('connexion.html');
+    });
+    const {data:membership}=await authClient.from('shop_members').select('role').eq('user_id',session.user.id).maybeSingle();
+    if(membership && membership.role==='owner') document.getElementById('adminLink').hidden=false;
+    document.body.style.visibility='visible';
+  } catch(err) {
+    console.error(err);
+    window.location.replace('connexion.html');
+  }
+})();
+</script>
 <script>
 const KEY='gurisha_simple_v1';
 const defaultCategories=['BOISSONS & BRASSERIE','ALIMENTATION','HYGIÈNE','DIVERS'];
