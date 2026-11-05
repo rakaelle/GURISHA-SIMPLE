@@ -60,6 +60,13 @@ Deno.serve(async (req) => {
         return json({ error: "Boutique, nom et code PIN à 6 chiffres requis." }, 400);
       }
 
+      const loginKey = await hmacHex(pepper, `${shopId}|${name.toLocaleLowerCase()}`);
+      const { data: locked, error: lockError } = await admin.rpc("gurisha_pin_is_locked", {
+        p_shop_id: shopId, p_login_key: loginKey,
+      });
+      if (lockError) throw lockError;
+      if (locked === true) return json({ error: "Trop de tentatives. Réessaie dans 15 minutes." }, 429);
+
       const { data: profiles, error } = await admin
         .from("staff_profiles")
         .select("id,user_id,auth_email,role,is_active,display_name")
@@ -68,6 +75,7 @@ Deno.serve(async (req) => {
         .limit(2);
       if (error) throw error;
       if (!profiles || profiles.length !== 1 || !profiles[0].is_active) {
+        await admin.rpc("gurisha_pin_record_failure", { p_shop_id: shopId, p_login_key: loginKey });
         return json({ error: "Identifiants incorrects ou compte désactivé." }, 401);
       }
 
@@ -80,8 +88,10 @@ Deno.serve(async (req) => {
         .signInWithPassword({ email: profile.auth_email, password });
 
       if (loginError || !sessionData.session) {
+        await admin.rpc("gurisha_pin_record_failure", { p_shop_id: shopId, p_login_key: loginKey });
         return json({ error: "Identifiants incorrects ou compte désactivé." }, 401);
       }
+      await admin.rpc("gurisha_pin_clear_failures", { p_shop_id: shopId, p_login_key: loginKey });
 
       return json({
         access_token: sessionData.session.access_token,
