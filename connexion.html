@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GURISHA SIMPLE — Connexion</title>
+<style>
+:root{--green:#198754;--green-dark:#126b42;--green-soft:#e8f5ed;--ink:#26372d;--muted:#718078;--line:#dce7df;--page:#f2f8f4}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:linear-gradient(145deg,#e8f5ed 0%,#f7fbf8 55%,#e5f2e9 100%);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:22px}
+.wrap{width:100%;max-width:410px}
+.brand{text-align:center;margin-bottom:22px}
+.logo{width:66px;height:66px;border-radius:20px;background:var(--green);color:#fff;display:grid;place-items:center;margin:0 auto 13px;font-size:27px;font-weight:800;letter-spacing:1px;box-shadow:0 9px 22px #19875430}
+.brand h1{font-size:25px;letter-spacing:3px;margin:0;color:var(--green-dark)}
+.brand p{font-size:13px;color:var(--muted);margin:7px 0 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:27px;box-shadow:0 18px 50px #174d2a12}
+.card h2{font-size:21px;margin:0 0 7px}
+.intro{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 23px}
+label{display:block;font-size:13px;font-weight:700;margin:0 0 8px}
+.field{margin-bottom:17px}
+input{width:100%;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 13px;font-size:15px;color:var(--ink);outline:none;background:#fff}
+input:focus{border-color:var(--green);box-shadow:0 0 0 3px #19875418}
+input::placeholder{color:#9aa79f}
+.submit{width:100%;height:49px;border:0;border-radius:10px;background:var(--green);color:white;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+.submit:active{background:var(--green-dark)}
+.note{display:flex;gap:9px;align-items:flex-start;background:var(--green-soft);border-radius:10px;padding:12px;margin-top:18px;color:var(--green-dark);font-size:12px;line-height:1.45}
+.lock{font-size:16px;line-height:1}
+.foot{text-align:center;color:#829087;font-size:11px;margin-top:20px}
+.preview{display:inline-block;margin-top:14px;color:var(--green-dark);font-size:12px;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="logo">G</div>
+    <h1>GURISHA</h1>
+    <p>Gestion simple de votre boutique</p>
+  </div>
+  <main class="card">
+    <h2>Bienvenue !</h2>
+    <p class="intro">Connectez-vous pour accéder à votre espace de travail.</p>
+    <form id="loginForm">
+      <div class="field">
+        <label for="employee">Nom d'utilisateur</label>
+        <input id="employee" name="employee" type="text" autocomplete="username" placeholder="Ex. Jean" required>
+      </div>
+      <div class="field">
+        <label for="pin">Code personnel</label>
+        <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]{4,6}" maxlength="6" placeholder="Votre code à 4 à 6 chiffres" required>
+      </div>
+      <button class="submit" type="submit">Se connecter</button>
+    </form>
+    <div class="note"><span class="lock">🔒</span><span>Votre accès est personnel. Ne partagez pas votre code avec les autres employés.</span></div>
+  </main>
+  <div class="foot">GURISHA SIMPLE · Accès réservé à l'équipe</div>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  alert('Ceci est un aperçu de l’écran de connexion. Les comptes et les codes ne sont pas encore reliés à Supabase.');
+});
+</script>
+</body>
+</html>
