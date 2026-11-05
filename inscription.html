@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GURISHA SIMPLE — Inscription propriétaire</title>
+<style>
+:root{--g:#198754;--gd:#126b42;--soft:#e8f5ed;--ink:#26372d;--muted:#718078;--line:#dce7df}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:22px;display:grid;place-items:center;background:linear-gradient(145deg,#e8f5ed,#f8fbf8 58%,#e5f2e9);font-family:Arial,sans-serif;color:var(--ink)}
+.wrap{width:100%;max-width:470px}.brand{text-align:center;margin-bottom:20px}.logo{width:62px;height:62px;margin:auto auto 12px;border-radius:19px;background:var(--g);color:white;display:grid;place-items:center;font-size:26px;font-weight:800}.brand h1{margin:0;color:var(--gd);letter-spacing:3px;font-size:25px}.brand p{color:var(--muted);font-size:13px}
+.card{background:white;border:1px solid var(--line);border-radius:18px;padding:25px;box-shadow:0 18px 50px #174d2a12}.card h2{margin:0 0 7px;font-size:21px}.intro{margin:0 0 20px;color:var(--muted);font-size:13px;line-height:1.5}
+.field{margin-bottom:14px}label{display:block;font-weight:700;font-size:13px;margin-bottom:7px}input{width:100%;height:46px;border:1px solid var(--line);border-radius:9px;padding:0 12px;font-size:14px;outline:none}input:focus{border-color:var(--g);box-shadow:0 0 0 3px #19875418}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{width:100%;height:49px;border:0;border-radius:10px;background:var(--g);color:white;font-weight:700;font-size:15px;margin-top:6px;cursor:pointer}.note{margin-top:16px;padding:12px;border-radius:9px;background:var(--soft);color:var(--gd);font-size:12px;line-height:1.5}.links{text-align:center;margin-top:17px;font-size:13px}.links a{color:var(--gd);font-weight:700;text-decoration:none}.foot{text-align:center;color:#829087;font-size:11px;margin-top:18px}.demo{background:#fff5e9;color:#85531b}
+@media(max-width:430px){.two{grid-template-columns:1fr}.card{padding:20px}}
+</style></head>
+<body><div class="wrap">
+<div class="brand"><div class="logo">G</div><h1>GURISHA</h1><p>Création de l'espace de votre boutique</p></div>
+<main class="card"><h2>Créer le compte propriétaire</h2><p class="intro">Cette inscription permet au propriétaire de créer et de gérer l'espace GURISHA de sa boutique.</p>
+<form id="ownerForm">
+<div class="field"><label for="shop">Nom de la boutique</label><input id="shop" placeholder="Ex. Gurisha Boutique" required></div>
+<div class="field"><label for="owner">Nom complet du propriétaire</label><input id="owner" autocomplete="name" placeholder="Votre nom complet" required></div>
+<div class="field"><label for="email">Adresse e-mail</label><input id="email" type="email" autocomplete="email" placeholder="vous@exemple.com" required></div>
+<div class="two"><div class="field"><label for="password">Mot de passe</label><input id="password" type="password" minlength="8" autocomplete="new-password" placeholder="8 caractères minimum" required></div>
+<div class="field"><label for="confirm">Confirmer le mot de passe</label><input id="confirm" type="password" minlength="8" autocomplete="new-password" placeholder="Répéter le mot de passe" required></div></div>
+<button type="submit">Créer mon espace GURISHA</button></form>
+<div class="note">🔐 Le propriétaire sera l'administrateur principal. Il pourra ensuite créer les accès des gestionnaires et des caissiers. Ne partagez jamais votre mot de passe.</div>
+<div class="links">Vous avez déjà un compte ? <a href="connexion.html">Se connecter</a></div>
+</main><div class="foot">GURISHA SIMPLE · Espace propriétaire</div></div>
+<script>
+document.getElementById('ownerForm').addEventListener('submit',function(e){e.preventDefault();if(document.getElementById('password').value!==document.getElementById('confirm').value){alert('Les deux mots de passe ne correspondent pas.');return;}alert('Aperçu uniquement : le formulaire sera relié à Supabase avant de créer un vrai compte. Aucun mot de passe n’a été enregistré.');});
+</script></body></html>
