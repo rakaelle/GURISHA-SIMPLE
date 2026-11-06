@@ -38,7 +38,8 @@ drop policy if exists "ff_menu_items_read_shop" on public.fast_food_menu_items;
 create policy "ff_menu_items_read_shop" on public.fast_food_menu_items
 for select to authenticated using (
  exists(select 1 from public.shop_members sm
- where sm.shop_id=fast_food_menu_items.shop_id and sm.user_id=auth.uid())
+ where sm.shop_id=fast_food_menu_items.shop_id and sm.user_id=auth.uid()
+ and sm.role in ('owner','manager','gestionnaire','cashier','caissier'))
 );
 drop policy if exists "ff_menu_items_manage_shop" on public.fast_food_menu_items;
 create policy "ff_menu_items_manage_shop" on public.fast_food_menu_items
