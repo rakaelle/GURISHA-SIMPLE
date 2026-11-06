@@ -6,7 +6,7 @@
 *{box-sizing:border-box}body{margin:0;background:#f4f8f5;color:var(--ink);font-family:Arial,sans-serif}header{background:var(--g);color:#fff;padding:18px 20px}header h1{margin:0;letter-spacing:2px;font-size:23px}header p{margin:5px 0 0;font-size:12px}main{max-width:1050px;margin:auto;padding:17px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}.top h2{margin:0;color:var(--gd);font-size:21px}
 button{border:0;border-radius:8px;padding:10px 13px;font-weight:700;cursor:pointer}.green{background:var(--g);color:white}.soft{background:var(--soft);color:var(--gd)}.danger{background:#fdebed;color:var(--red)}button:disabled{opacity:.55;cursor:wait}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}.card{background:white;border:1px solid var(--line);border-radius:11px;padding:14px}.card small{display:block;color:var(--muted);margin-bottom:7px}.card strong{font-size:22px;color:var(--gd)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}.role-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px}.role-option{display:flex;align-items:center;gap:7px;padding:9px;border:1px solid var(--line);border-radius:8px;background:#fbfdfb;font-size:12px}.role-option input{width:16px;height:16px;accent-color:var(--g)}.role-group{font-size:12px;font-weight:800;color:var(--gd);margin:8px 0 6px}.card{background:white;border:1px solid var(--line);border-radius:11px;padding:14px}.card small{display:block;color:var(--muted);margin-bottom:7px}.card strong{font-size:22px;color:var(--gd)}
 .panel{background:white;border:1px solid var(--line);border-radius:11px;padding:16px;margin-bottom:15px}.panel h3{margin:0 0 14px;color:var(--gd);font-size:16px}
 form .grid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr auto;gap:9px;align-items:end}.field label{display:block;font-size:12px;font-weight:bold;margin-bottom:6px}.field input,.field select{width:100%;height:42px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:14px;background:#fff}
 .tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}th,td{text-align:left;padding:12px 9px;border-bottom:1px solid #edf1ee}th{background:#f7faf8;color:#53645a}.role{display:inline-block;background:var(--soft);color:var(--gd);padding:5px 8px;border-radius:20px;font-size:11px;font-weight:bold}.status{font-size:12px;font-weight:bold;color:var(--g)}.off{color:var(--red)}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{font-size:11px;padding:7px 9px}.note{padding:12px;background:var(--soft);border-radius:9px;color:var(--gd);font-size:12px;line-height:1.5;margin-top:13px}.statusbox{display:none;padding:12px;border-radius:9px;font-size:13px;line-height:1.5;margin:0 0 14px}.statusbox.show{display:block}.statusbox.err{background:#fdebed;color:#a52b35}.statusbox.ok{background:var(--soft);color:var(--gd)}
@@ -27,7 +27,34 @@ form .grid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr auto;gap:9px;ali
 <section class="panel"><h3>Ajouter un membre de l'équipe</h3>
 <form id="userForm"><div class="grid">
 <div class="field"><label for="name">Nom de l'utilisateur</label><input id="name" placeholder="Ex. Jean" minlength="2" maxlength="80" required></div>
-<div class="field"><label for="role">Fonction</label><select id="role"><option value="manager">Gestionnaire</option><option value="cashier">Caissier</option><option value="preparer">Préparateur</option></select></div>
+<div class="field" style="grid-column:1/-1"><label>Rôles de l'employé (plusieurs choix possibles)</label>
+<div class="role-group">Gestion de boutique</div><div class="role-options">
+<label class="role-option"><input type="checkbox" name="employeeRole" value="manager"> Gestionnaire</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="cashier"> Caissier</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="seller"> Vendeur</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="stock_manager"> Magasinier</label>
+</div>
+<div class="role-group">Restauration et production</div><div class="role-options">
+<label class="role-option"><input type="checkbox" name="employeeRole" value="preparer"> Préparateur</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="order_preparer"> Préparateur de commandes</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="baker"> Boulanger</label>
+</div>
+<div class="role-group">Beauté et services</div><div class="role-options">
+<label class="role-option"><input type="checkbox" name="employeeRole" value="hairdresser"> Coiffeur</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="beautician"> Esthéticien</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="receptionist"> Réceptionniste</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="mechanic"> Mécanicien</label>
+</div>
+<div class="role-group">Transport, livraison et événementiel</div><div class="role-options">
+<label class="role-option"><input type="checkbox" name="employeeRole" value="delivery_person"> Livreur</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="driver"> Chauffeur</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="reservation_manager"> Responsable des réservations</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="delivery_manager"> Responsable des livraisons</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="mover"> Déménageur</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="team_leader"> Chef d'équipe</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="event_manager"> Responsable événementiel</label>
+<label class="role-option"><input type="checkbox" name="employeeRole" value="technician"> Technicien</label>
+</div></div>
 <div class="field"><label for="pin">Code personnel (6 chiffres)</label><input id="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="••••••" required></div>
 <div class="field"><label for="pin2">Confirmer le code</label><input id="pin2" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="••••••" required></div>
 <button class="green" id="createBtn" type="submit">+ Créer</button></div></form>
@@ -54,7 +81,7 @@ async function copyInvitation(id){
  try{await navigator.clipboard.writeText(invitation);message('Message d’invitation copié pour '+person.display_name+'. Ajoute son PIN avant de l’envoyer.','ok');}
  catch(err){message('Copie impossible. Vérifie les autorisations du navigateur.','err');}
 }
-document.getElementById('userForm').addEventListener('submit',async e=>{e.preventDefault();const name=document.getElementById('name').value.trim(),pin=document.getElementById('pin').value,pin2=document.getElementById('pin2').value,role=document.getElementById('role').value;if(pin!==pin2){message('Les deux codes PIN ne correspondent pas.','err');return;}if(!/^\d{6}$/.test(pin)){message('Le code PIN doit contenir exactement 6 chiffres.','err');return;}const btn=document.getElementById('createBtn');btn.disabled=true;try{await callStaff('create',{name,role,pin});e.target.reset();await refresh();message('Le compte de '+name+' a été créé avec succès.','ok');}catch(err){message('Création impossible : '+err.message,'err');}finally{btn.disabled=false;}});
+document.getElementById('userForm').addEventListener('submit',async e=>{e.preventDefault();const name=document.getElementById('name').value.trim(),pin=document.getElementById('pin').value,pin2=document.getElementById('pin2').value,roles=[...document.querySelectorAll('input[name="employeeRole"]:checked')].map(x=>x.value);if(!roles.length){message('Sélectionnez au moins un rôle.','err');return;}if(pin!==pin2){message('Les deux codes PIN ne correspondent pas.','err');return;}if(!/^\d{6}$/.test(pin)){message('Le code PIN doit contenir exactement 6 chiffres.','err');return;}const btn=document.getElementById('createBtn');btn.disabled=true;try{await callStaff('create',{name,roles,pin});e.target.reset();await refresh();message('Le compte de '+name+' a été créé avec succès.','ok');}catch(err){message('Création impossible : '+err.message,'err');}finally{btn.disabled=false;}});
 async function toggleEmployee(id){const p=employees.find(x=>x.id===id);if(!p)return;if(!confirm((p.is_active?'Désactiver':'Réactiver')+' le compte de '+p.display_name+' ?'))return;try{await callStaff('set_active',{employee_id:id,active:!p.is_active});await refresh();message('Statut du compte mis à jour.','ok');}catch(err){message('Modification impossible : '+err.message,'err');}}
 async function deleteEmployee(id){const p=employees.find(x=>x.id===id);if(!p||!confirm('Supprimer définitivement le compte de '+p.display_name+' ?'))return;try{await callStaff('delete',{employee_id:id});await refresh();message('Compte supprimé.','ok');}catch(err){message('Suppression impossible : '+err.message,'err');}}
 function openReset(id){resetEmployeeId=id;document.getElementById('newPin').value='';document.getElementById('resetModal').classList.add('show');}
