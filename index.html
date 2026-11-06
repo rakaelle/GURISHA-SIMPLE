@@ -275,6 +275,7 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     document.getElementById('search').hidden=!(hasCommerce||hasPos);
     if(!hasCommerce&&!hasPos){location.replace('modules.html');return;}
     const canViewHistory=['owner','manager','gestionnaire'].includes(membership.role);
+    if(!hasPos){document.getElementById('salesTabButton').hidden=true;document.getElementById('purchasesTabButton').hidden=true;}
     if(!canViewHistory){ document.getElementById('salesTabButton').hidden=true; document.getElementById('purchasesTabButton').hidden=true; }
     if(!['owner','manager','gestionnaire'].includes(membership.role)) document.getElementById('fastFoodStockButton').hidden=true;
     if(!['owner','manager','gestionnaire'].includes(membership.role)) document.getElementById('fastFoodMenuButton').hidden=true;
@@ -645,7 +646,7 @@ window.gurishaInit=async function(){
   lastRemoteSignature=JSON.stringify(currentPayload());
   fillCategories();
   render();
-  switchCaisse();
+  if(Array.isArray(window.GURISHA_MODULES)&&window.GURISHA_MODULES.includes('pos')) switchCaisse(); else switchStock();
   document.querySelector('footer').textContent='GURISHA SIMPLE — Synchronisé. Actualisation automatique activée.';
   window.setInterval(refreshSharedData,4000);
 };
