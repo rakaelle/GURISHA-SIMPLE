@@ -150,7 +150,7 @@ document.querySelectorAll('#orderForm [name=delivery_fee],#quoteForm [name=deliv
   const {data:cfg,error:ce}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(ce)throw ce;
   if(!(cfg.enabled_modules||[]).includes('construction_materials_delivery'))throw new Error('Le module Matériaux de construction & livraison n’est pas activé pour cet établissement.');
   if(!['owner','manager','cashier'].includes(role))throw new Error('Accès non autorisé à ce module.');
-  const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=(shop?.name||'Établissement')+' · '+role;
+  let shopName='Mon établissement';if(role==='owner'){const {data:shop,error:shopError}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();if(shopError)throw shopError;if(shop?.name)shopName=shop.name;}$('shopLabel').textContent=shopName+' · '+role;
   if(role==='cashier'){document.querySelectorAll('[data-tab=quotes],[data-tab=fleet]').forEach(b=>b.classList.add('hidden'));$('materialForm').classList.add('hidden');$('vehicleForm').classList.add('hidden');$('deliveryForm').classList.add('hidden');}
   await loadAll();
  }catch(err){say(err.message||'Impossible de charger le module.',true);}
