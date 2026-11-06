@@ -111,7 +111,7 @@ $('logoutButton').addEventListener('click',async()=>{
 function say(message,error=false){$('notice').textContent=message;$('notice').className='notice'+(error?' error':'');$('notice').classList.remove('hidden');}
 function showTab(name){document.querySelectorAll('.tab-panel').forEach(x=>x.classList.toggle('hidden',x.id!==name));document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));}
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.tab==='parametres'){location.href='administration.html';return;}showTab(b.dataset.tab);}));
-$('copyShopCode').addEventListener('click',async()=>{try{const code=$('shopLoginCode').textContent.trim();if(!code||code==='Chargement…')throw new Error('Code non disponible.');await navigator.clipboard.writeText(code);say('Code de la boutique copié.');}catch(err){say('Copie impossible : '+err.message,true);}});
+// Le bouton de copie du code boutique appartient à l'administration, pas à cette page.
 function mediaMarkup(items){return (items||[]).map(m=>m.kind==='video'?'<video controls playsinline src="'+esc(m.url)+'"></video>':'<img src="'+esc(m.url)+'" alt="Média de la prestation">').join('');}
 async function uploadMedia(files,folder){
  const items=[];
