@@ -7,7 +7,7 @@
 <div class="top"><div><h2 style="margin:0;color:var(--gd)">Espace salon</h2><small id="shopLabel" class="muted">Chargement…</small></div><button class="light" onclick="location.href='index.html'">← Retour</button></div>
 <div id="notice" class="notice hidden" role="status"></div>
 <nav class="tabs" aria-label="Sections du salon">
-<button class="active" data-tab="catalogue">Catalogue</button><button data-tab="equipes">Équipes</button><button data-tab="rendezvous">Rendez-vous & devis</button><button data-tab="transport">Taxis</button><button data-tab="depenses">Dépenses</button>
+<button class="active" data-tab="catalogue">Catalogue</button><button data-tab="equipes">Équipes</button><button data-tab="rendezvous">Rendez-vous & devis</button><button data-tab="stock">Matériaux & stock</button><button data-tab="transport">Taxis</button><button data-tab="depenses">Dépenses</button>
 </nav>
 
 <section id="catalogue" class="tab-panel">
@@ -53,7 +53,28 @@
  <div class="panel"><h3>Rendez-vous enregistrés</h3><div id="appointmentList" class="list muted">Chargement…</div></div>
 </section>
 
-<section id="transport" class="tab-panel hidden">
+
+<section id="stock" class="tab-panel hidden">
+ <div class="panel"><h3>Ajouter un produit ou matériel</h3><form id="productForm"><div class="grid">
+  <div class="field"><label>Nom de l'article *</label><input name="name" required placeholder="Ex. Mèches X-pression"></div>
+  <div class="field"><label>Catégorie</label><select name="category"><option>Coiffure</option><option>Tresses</option><option>Onglerie</option><option>Soins</option><option>Maquillage</option><option>Hygiène</option><option>Équipement</option><option>Autres</option></select></div>
+  <div class="field"><label>Utilisation *</label><select name="usage_type"><option value="sale">Vente au client</option><option value="consumable">Consommation interne</option><option value="both">Vente et consommation interne</option><option value="equipment">Matériel / équipement durable</option></select></div>
+  <div class="field"><label>Unité</label><input name="unit" value="unité" placeholder="unité, paquet, flacon…"></div>
+  <div class="field"><label>Prix d'achat (FBu)</label><input name="purchase_price" type="number" min="0" value="0"></div>
+  <div class="field"><label>Prix de vente client (FBu)</label><input name="sale_price" type="number" min="0" value="0"></div>
+  <div class="field"><label>Stock initial</label><input name="stock_quantity" type="number" min="0" step="0.001" value="0"></div>
+  <div class="field"><label>Seuil d'alerte</label><input name="min_stock" type="number" min="0" step="0.001" value="0"></div>
+ </div><button class="green" type="submit" style="width:100%;margin-top:12px">Enregistrer l'article</button></form></div>
+ <div class="panel"><h3>Entrée ou sortie de stock</h3><form id="movementForm"><div class="grid">
+  <div class="field"><label>Article *</label><select name="product_id" id="movementProduct" required><option value="">Choisir</option></select></div>
+  <div class="field"><label>Type de mouvement</label><select name="movement_type"><option value="purchase">Achat / réapprovisionnement</option><option value="consumption">Consommation pour une prestation</option><option value="sale">Vente au client</option><option value="adjustment">Correction positive du stock</option></select></div>
+  <div class="field"><label>Quantité *</label><input name="quantity" type="number" min="0.001" step="0.001" required></div>
+  <div class="field"><label>Prix d'achat unitaire (FBu)</label><input name="unit_cost" type="number" min="0" value="0"></div>
+  <div class="field full"><label>Note</label><input name="note" placeholder="Fournisseur, prestation ou précision"></div>
+ </div><button class="green" type="submit" style="width:100%;margin-top:12px">Enregistrer le mouvement</button></form></div>
+ <div class="panel"><h3>Inventaire du salon</h3><div id="productList" class="list muted">Chargement…</div></div>
+</section>
+\n<section id="transport" class="tab-panel hidden">
  <div class="panel"><h3>Réservations de taxi</h3><p class="muted">Le salon réserve le taxi pour les tresseuses. Le montant facturé à la cliente figure dans le devis ; le montant réellement payé sera enregistré dans les dépenses.</p><div id="taxiList" class="list muted">Chargement…</div></div>
 </section>
 
@@ -70,7 +91,7 @@
 </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
-let db,shopId,userId,canManageStaff=false,canManageFinance=false,services=[],teams=[],staff=[],appointments=[],transportBookings=[],expenses=[];
+let db,shopId,userId,canManageStaff=false,canManageFinance=false,services=[],teams=[],staff=[],appointments=[],transportBookings=[],expenses=[],salonProducts=[];
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>Number(v||0).toLocaleString('fr-FR')+' FBu';
@@ -116,27 +137,43 @@ function renderTransport(){
  transportBookings.forEach(t=>{const s=document.querySelector('[data-taxi-status="'+t.id+'"]');if(s)s.value=t.booking_status;});
  document.querySelectorAll('[data-save-taxi]').forEach(b=>b.addEventListener('click',async()=>{const id=b.dataset.saveTaxi;const payload={taxi_provider:document.querySelector('[data-taxi-provider="'+id+'"]').value.trim()||null,taxi_contact:document.querySelector('[data-taxi-contact="'+id+'"]').value.trim()||null,booking_status:document.querySelector('[data-taxi-status="'+id+'"]').value,booked_by:userId,updated_at:new Date().toISOString()};const {error}=await db.from('salon_transport_bookings').update(payload).eq('id',id).eq('shop_id',shopId);if(error){say('Mise à jour impossible : '+error.message,true);return;}say('Réservation de taxi mise à jour.');await loadAll();}));
 }
+function renderProducts(){
+ $('movementProduct').innerHTML='<option value="">Choisir</option>'+salonProducts.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+p.stock_quantity+' '+esc(p.unit)+'</option>').join('');
+ $('productList').innerHTML=salonProducts.length?salonProducts.map(p=>'<article class="item"><div class="row"><strong>'+esc(p.name)+'</strong><span class="stat">'+p.stock_quantity+' '+esc(p.unit)+'</span></div><small>'+esc(p.category)+' · '+({sale:'Vente au client',consumable:'Consommation interne',both:'Vente et consommation',equipment:'Équipement durable'}[p.usage_type])+' · Achat : '+money(p.purchase_price)+' · Vente : '+money(p.sale_price)+'</small><small>Seuil d’alerte : '+p.min_stock+' '+esc(p.unit)+(Number(p.stock_quantity)<=Number(p.min_stock)?' · STOCK BAS':'')+'</small></article>').join(''):'Aucun article ni équipement enregistré.';
+}
 function renderExpenses(){
  $('expenseList').innerHTML=expenses.length?expenses.map(e=>'<article class="item"><div class="row"><strong>'+esc(e.description)+'</strong><span class="stat">'+money(e.amount)+'</span></div><small>'+esc(e.category)+' · '+new Date(e.paid_at).toLocaleString('fr-FR')+' · Payé à : '+esc(e.paid_to||'Non précisé')+'</small></article>').join(''):'Aucune dépense enregistrée.';
 }
 async function loadAll(){
- const [sr,tr,ar,xr]=await Promise.all([
+ const [sr,tr,ar,xr,pr]=await Promise.all([
   db.from('salon_services').select('*').eq('shop_id',shopId).eq('is_active',true).order('category').order('name'),
   db.from('salon_teams').select('*').eq('shop_id',shopId).eq('is_active',true).order('team_name'),
   db.from('salon_appointments').select('*').eq('shop_id',shopId).order('appointment_date',{ascending:false}).limit(100),
-  canManageFinance?db.from('salon_expenses').select('*').eq('shop_id',shopId).order('paid_at',{ascending:false}).limit(100):Promise.resolve({data:[],error:null})
+  canManageFinance?db.from('salon_expenses').select('*').eq('shop_id',shopId).order('paid_at',{ascending:false}).limit(100):Promise.resolve({data:[],error:null}),\n  db.from('salon_products').select('*').eq('shop_id',shopId).eq('is_active',true).order('name')
  ]);
- for(const r of [sr,tr,ar,xr])if(r.error)throw r.error;
- services=sr.data||[];teams=tr.data||[];appointments=ar.data||[];expenses=xr.data||[];
+ for(const r of [sr,tr,ar,xr,pr])if(r.error)throw r.error;
+ services=sr.data||[];teams=tr.data||[];appointments=ar.data||[];expenses=xr.data||[];salonProducts=pr.data||[];
  const [tmr,taxr]=await Promise.all([
   db.from('salon_team_members').select('*').eq('shop_id',shopId),
   db.from('salon_transport_bookings').select('*').eq('shop_id',shopId).order('pickup_at',{ascending:false})
  ]);
  if(tmr.error)throw tmr.error;if(taxr.error)throw taxr.error;
  const members=tmr.data||[];teams=teams.map(t=>({...t,members:members.filter(m=>m.team_id===t.id)}));transportBookings=taxr.data||[];
- fillSelects();renderServices();renderTeams();renderAppointments();renderTransport();renderExpenses();
+ fillSelects();renderServices();renderTeams();renderAppointments();renderTransport();renderExpenses();renderProducts();
 }
-$('serviceForm').addEventListener('submit',async e=>{
+$('productForm').addEventListener('submit',async e=>{
+ e.preventDefault();const fd=new FormData(e.currentTarget);
+ const payload={shop_id:shopId,name:String(fd.get('name')).trim(),category:fd.get('category'),usage_type:fd.get('usage_type'),unit:String(fd.get('unit')||'unité').trim(),purchase_price:Number(fd.get('purchase_price')||0),sale_price:Number(fd.get('sale_price')||0),stock_quantity:Number(fd.get('stock_quantity')||0),min_stock:Number(fd.get('min_stock')||0),created_by:userId};
+ const {error}=await db.from('salon_products').insert(payload);if(error){say('Article non enregistré : '+error.message,true);return;}
+ e.currentTarget.reset();say('Article ajouté à l’inventaire du salon.');await loadAll();
+});
+$('movementForm').addEventListener('submit',async e=>{
+ e.preventDefault();const fd=new FormData(e.currentTarget);
+ const {error}=await db.rpc('gurisha_salon_stock_move',{p_product_id:fd.get('product_id'),p_movement_type:fd.get('movement_type'),p_quantity:Number(fd.get('quantity')),p_unit_cost:Number(fd.get('unit_cost')||0),p_note:String(fd.get('note')||'').trim()||null,p_appointment_id:null});
+ if(error){say('Mouvement non enregistré : '+error.message,true);return;}
+ e.currentTarget.reset();say('Mouvement de stock enregistré.');await loadAll();
+});
+\n$('serviceForm').addEventListener('submit',async e=>{
  e.preventDefault();const f=e.currentTarget,fd=new FormData(f),name=String(fd.get('name')).trim();
  try{
   const media=await uploadMedia(f.elements.media.files,'services');
@@ -198,7 +235,7 @@ $('expenseForm').addEventListener('submit',async e=>{
   if(!valid.length)throw new Error('Accès réservé au gestionnaire ou à la réception.');
   const key='gurisha_active_shop_'+userId,saved=localStorage.getItem(key),selected=valid.find(m=>m.shop_id===saved)||valid[0];shopId=selected.shop_id;
   canManageStaff=['owner','manager'].includes(selected.role)||roles.includes('manager');canManageFinance=canManageStaff;
-  if(!canManageStaff){['catalogue','equipes','depenses'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');showTab('rendezvous');}
+  if(!canManageStaff){['catalogue','equipes','depenses','stock'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');showTab('rendezvous');}
   const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=shop?.name||'Mon salon';
   const {data:cfg,error:ce}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(ce)throw ce;
   if(!(cfg.enabled_modules||[]).some(x=>['appointments','service_management'].includes(x)))throw new Error('Activez les modules Rendez-vous ou Catalogue de prestations dans les paramètres de cette boutique.');
