@@ -28,7 +28,8 @@ const definitions={
 };
 (async()=>{
  try{
-  const {data:{session}}=await db.auth.getSession();if(!session){location.replace('connexion.html');return;}\n  const staffRoles=Array.isArray(session.user.user_metadata?.gurisha_roles)?session.user.user_metadata.gurisha_roles:[];
+  const {data:{session}}=await db.auth.getSession();if(!session){location.replace('connexion.html');return;}
+  const staffRoles=Array.isArray(session.user.user_metadata?.gurisha_roles)?session.user.user_metadata.gurisha_roles:[];
   const {data:members,error:merr}=await db.from('shop_members').select('shop_id,role').eq('user_id',session.user.id);if(merr)throw merr;
   if(!members||!members.length)throw new Error('Aucun établissement associé à ce compte.');
   const activeKey='gurisha_active_shop_'+session.user.id;
