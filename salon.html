@@ -147,10 +147,10 @@ $('serviceForm').addEventListener('submit',async e=>{
 });
 $('teamForm').addEventListener('submit',async e=>{
  e.preventDefault();const f=e.currentTarget,fd=new FormData(f),selected=[...document.querySelectorAll('input[name="teamStaff"]:checked')].map(x=>x.value);
- if(!selected.length){say('Sélectionnez au moins un membre pour cette équipe.',true);return;}
+ const leaderId=fd.get('team_leader_id');if(leaderId&&!selected.includes(leaderId))selected.push(leaderId);if(!selected.length){say('Sélectionnez au moins un membre pour cette équipe.',true);return;}
  const {data:team,error}=await db.from('salon_teams').insert({shop_id:shopId,team_name:String(fd.get('team_name')).trim(),team_leader_id:fd.get('team_leader_id')||null}).select().single();
  if(error){say(error.message,true);return;}
- const leaderId=fd.get('team_leader_id');if(leaderId&&!selected.includes(leaderId))selected.push(leaderId);const rows=selected.map(id=>({shop_id:shopId,team_id:team.id,staff_profile_id:id,team_function:id===leaderId?'Chef d’équipe':'Tresseuse'}));
+ const rows=selected.map(id=>({shop_id:shopId,team_id:team.id,staff_profile_id:id,team_function:id===leaderId?'Chef d’équipe':'Tresseuse'}));
  const result=await db.from('salon_team_members').insert(rows);
  if(result.error){await db.from('salon_teams').delete().eq('id',team.id);say(result.error.message,true);return;}
  f.reset();say('Équipe créée.');await loadAll();fillStaff();
@@ -184,7 +184,7 @@ $('appointmentForm').addEventListener('submit',async e=>{
 });
 $('expenseForm').addEventListener('submit',async e=>{
  e.preventDefault();const fd=new FormData(e.currentTarget);
- const payload={shop_id:shopId,appointment_id:fd.get('appointment_id')||null,category:fd.get('category'),description:String(fd.get('description')).trim(),amount:Number(fd.get('amount')),paid_to:fd.get('paid_to')||null,paid_at:fd.get('paid_at')?new Date(fd.get('paid_at')).toISOString():new Date().toISOString(),created_by:userId};
+ const expenseAppointment=fd.get('appointment_id')||null;const linkedTaxi=fd.get('category')==='transport'&&expenseAppointment?transportBookings.find(t=>t.appointment_id===expenseAppointment):null;const payload={shop_id:shopId,appointment_id:expenseAppointment,transport_booking_id:linkedTaxi?.id||null,category:fd.get('category'),description:String(fd.get('description')).trim(),amount:Number(fd.get('amount')),paid_to:fd.get('paid_to')||null,paid_at:fd.get('paid_at')?new Date(fd.get('paid_at')).toISOString():new Date().toISOString(),created_by:userId};
  const {error}=await db.from('salon_expenses').insert(payload);if(error){say(error.message,true);return;}
  e.currentTarget.reset();say('Dépense réelle enregistrée dans la gestion du salon.');await loadAll();
 });
