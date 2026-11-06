@@ -1,4 +1,4 @@
-const CACHE_NAME = "gurisha-shell-v10";
+const CACHE_NAME = "gurisha-shell-v11";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -11,6 +11,7 @@ const APP_SHELL = [
   "./fast-food-stock.html",
   "./fast-food-menu.html",
   "./fast-food-caisse.html",
+  "./construction-materials.html",
   "./manifest.webmanifest",
   "./icons/gurisha-icon.svg"
 ];
