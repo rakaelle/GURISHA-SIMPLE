@@ -72,7 +72,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <button class="light" id="exportButton" onclick="exportCSV()">Exporter CSV</button>
 </div>
 <input id="search" placeholder="Rechercher un article..." oninput="render();renderCaisse()">
-<section id="caissePanel"><div class="pos-layout"><div class="pos-products"><div class="pos-section-title"><div><h2>Articles disponibles</h2><p>Faites défiler les articles avec les flèches.</p></div></div><div id="posProducts"></div></div><div class="pos-cart"><h2>Récapitulatif de la vente</h2><div id="posCart">Aucun article ajouté.</div><div class="pos-total-line"><span>Total à payer</span><strong id="posTotal">0 FBu</strong></div><div class="field"><label for="cashReceived">Montant reçu en espèces (FBu)</label><input id="cashReceived" type="number" min="0" inputmode="numeric" placeholder="Saisir le montant reçu" oninput="calculateChange()"></div><div class="cash-shortcuts"><span>Billets rapides — appuyez pour ajouter</span><div class="cash-buttons"><button type="button" onclick="addCash(500)">500</button><button type="button" onclick="addCash(1000)">1 000</button><button type="button" onclick="addCash(2000)">2 000</button><button type="button" onclick="addCash(5000)">5 000</button><button type="button" onclick="addCash(10000)">10 000</button><button type="button" class="cash-clear" onclick="clearCash()">Effacer</button></div></div><div class="pos-change" id="posChange">Monnaie à rendre : 0 FBu</div><button class="green pos-checkout" id="checkoutButton" onclick="checkoutSale()">VALIDER LA VENTE</button><div id="posSuccess"></div><button class="light" id="historyButton" onclick="toggleSalesHistory()">Historique des ventes</button></div></div><div id="salesHistory"></div><button class="gray" onclick="switchStock()">Retour au stock</button></section><div id="inventory"></div>
+<section id="caissePanel"><div class="pos-layout"><div class="pos-products"><div class="pos-section-title"><div><h2>Articles disponibles</h2><p>Faites défiler les articles avec les flèches.</p></div></div><div id="posProducts"></div></div><div class="pos-cart"><h2>Panier</h2><div id="posCart">Aucun article ajouté.</div><div class="pos-total-line"><span>Total à payer</span><strong id="posTotal">0 FBu</strong></div><div class="field"><label for="cashReceived">Montant reçu en espèces (FBu)</label><input id="cashReceived" type="number" min="0" inputmode="numeric" placeholder="Saisir le montant reçu" oninput="calculateChange()"></div><div class="cash-shortcuts"><span>Billets rapides — appuyez pour ajouter</span><div class="cash-buttons"><button type="button" onclick="addCash(500)">500</button><button type="button" onclick="addCash(1000)">1 000</button><button type="button" onclick="addCash(2000)">2 000</button><button type="button" onclick="addCash(5000)">5 000</button><button type="button" onclick="addCash(10000)">10 000</button><button type="button" onclick="setExactCash()">Monnaie exacte</button><button type="button" class="cash-clear" onclick="clearCash()">Effacer</button></div></div><div class="pos-change" id="posChange">Monnaie à rendre : 0 FBu</div><button class="green pos-checkout" id="checkoutButton" onclick="checkoutSale()">VALIDER LA VENTE</button><div id="posSuccess"></div><button class="light" id="historyButton" onclick="toggleSalesHistory()">Historique des ventes</button></div></div><div id="salesHistory"></div><button class="gray" onclick="switchStock()">Retour au stock</button></section><div id="inventory"></div>
 </main>
 <footer>GURISHA SIMPLE — Les données de cette version sont enregistrées dans ce navigateur.</footer>
 <div class="modal" id="profileModal"><div class="panel"><h2>Mon profil</h2><p id="profileEmail" class="hint"></p><div class="buttons"><button type="button" class="gray" onclick="closeModal('profileModal')">Fermer</button><button type="button" class="red" id="logoutButton">Se déconnecter</button></div></div></div>
@@ -344,6 +344,7 @@ function addCash(amount){
  calculateChange();
 }
 function clearCash(){document.getElementById("cashReceived").value="";calculateChange();}
+function setExactCash(){document.getElementById("cashReceived").value=String(posTotal());calculateChange();}
 function changePosPage(delta){posPage=Math.max(0,posPage+delta);renderCaisse();}
 function selectPosCategory(category){posSelectedCategory=category;posPage=0;renderCaisse();}
 function renderCaisse(){
@@ -444,13 +445,21 @@ async function loadSalesHistory(){
  if(r.error){root.textContent="Historique indisponible : "+r.error.message;return;}
  root.innerHTML="<h2>Historique des ventes</h2>";
  if(!r.data||!r.data.length){root.append("Aucune vente enregistrée.");return;}
+ const wrap=document.createElement("div");wrap.className="tablewrap";
+ const table=document.createElement("table");table.style.minWidth="760px";
+ table.innerHTML="<thead><tr><th>Date et heure</th><th>Articles vendus</th><th>Total</th><th>Montant reçu</th><th>Monnaie rendue</th><th>Action</th></tr></thead>";
+ const body=document.createElement("tbody");
  r.data.forEach(s=>{
-  const card=document.createElement("div");card.className="pos-products";card.style.margin="10px 0";
-  const date=document.createElement("b");date.textContent=new Date(s.created_at).toLocaleString("fr-FR");card.appendChild(date);
-  (s.items||[]).forEach(i=>{const line=document.createElement("p");line.textContent=i.product_name+" × "+i.quantity+" — "+money(i.line_total);card.appendChild(line);});
-  const total=document.createElement("p");total.textContent="Total : "+money(s.total_amount)+" · Reçu : "+money(s.cash_received)+" · Monnaie : "+money(s.change_due);card.appendChild(total);
-  const cancel=document.createElement("button");cancel.className="red";cancel.textContent="Annuler et supprimer";cancel.addEventListener("click",()=>cancelPosSale(s.id));card.appendChild(cancel);root.appendChild(card);
+  const tr=document.createElement("tr");
+  const date=document.createElement("td");date.textContent=new Date(s.created_at).toLocaleString("fr-FR");
+  const items=document.createElement("td");items.textContent=(s.items||[]).map(i=>i.product_name+" × "+i.quantity).join(", ");
+  const total=document.createElement("td");total.textContent=money(s.total_amount);
+  const received=document.createElement("td");received.textContent=money(s.cash_received);
+  const change=document.createElement("td");change.textContent=money(s.change_due);
+  const action=document.createElement("td");const cancel=document.createElement("button");cancel.className="red";cancel.textContent="Annuler";cancel.addEventListener("click",()=>cancelPosSale(s.id));action.appendChild(cancel);
+  tr.append(date,items,total,received,change,action);body.appendChild(tr);
  });
+ table.appendChild(body);wrap.appendChild(table);root.appendChild(wrap);
 }
 
 window.gurishaInit=async function(){
