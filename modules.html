@@ -46,7 +46,7 @@ const definitions={
    const desc=document.createElement('p');desc.textContent=d.desc;
    const status=document.createElement('div');status.className='status';status.textContent=d.ready?'Disponible':'Mise en place progressive';
    const btn=document.createElement('button');btn.className=d.ready?'green':'light';btn.textContent=d.ready?'Ouvrir le module':'En préparation';btn.disabled=!d.ready;
-   if(d.ready)btn.addEventListener('click',()=>location.href=d.url);
+   if(d.ready)btn.addEventListener('click',()=>{const target=key==='fast_food'&&member.role==='cashier'?'fast-food-caisse.html':key==='fast_food'&&member.role==='preparer'?'preparateur.html':d.url;location.href=target;});
    card.append(title,desc,status,btn);grid.appendChild(card);
   });
   if(!grid.children.length)grid.innerHTML='<div class="empty">Aucun module n’est activé. Contactez le propriétaire de l’établissement pour configurer ses activités.</div>';
