@@ -13,7 +13,11 @@ form .grid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr auto;gap:9px;ali
 .modal{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:15px}.modal.show{display:flex}.dialog{background:white;border-radius:12px;padding:20px;width:100%;max-width:400px}.dialog h3{margin-top:0;color:var(--gd)}.dialog input{width:100%;height:44px;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:16px;letter-spacing:3px}.dialog .actions{margin-top:14px}.dialog .actions button{flex:1}
 @media(max-width:700px){form .grid{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.top h2{width:100%}}
 @media(max-width:430px){form .grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}main{padding:11px}}
-</style></head><body>
+</style>
+<meta name="theme-color" content="#198754">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/gurisha-icon.svg" type="image/svg+xml">
+</head><body>
 <header><h1>GURISHA</h1><p>Administration de la boutique</p></header>
 <main><div class="top"><h2>Gestion des utilisateurs</h2><a href="index.html" style="color:#126b42;font-size:13px;font-weight:bold">← Retour à la boutique</a></div>
 <div id="status" class="statusbox" role="status" aria-live="polite"></div>
@@ -48,4 +52,12 @@ function openReset(id){resetEmployeeId=id;document.getElementById('newPin').valu
 function closeReset(){document.getElementById('resetModal').classList.remove('show');resetEmployeeId=null;}
 async function savePin(){const pin=document.getElementById('newPin').value;if(!/^\d{6}$/.test(pin)){alert('Entrez exactement 6 chiffres.');return;}const btn=document.getElementById('savePinBtn');btn.disabled=true;try{await callStaff('reset_pin',{employee_id:resetEmployeeId,pin});closeReset();message('Le code PIN a été modifié.','ok');}catch(err){message('Modification du code impossible : '+err.message,'err');}finally{btn.disabled=false;}}
 (async function init(){try{if(!window.supabase||!window.GURISHA_SUPABASE_URL||!window.GURISHA_SUPABASE_KEY)throw new Error('Configuration Supabase introuvable.');client=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);const {data:{session},error}=await client.auth.getSession();if(error||!session){location.replace('connexion.html');return;}const {data:members,error:memberError}=await client.from('shop_members').select('shop_id,role').eq('user_id',session.user.id).eq('role','owner').limit(1);if(memberError)throw memberError;if(!members||!members.length){throw new Error('Accès réservé au propriétaire de la boutique.');}shopId=members[0].shop_id;const codeData=await callStaff('get_shop_code');document.getElementById('shopLoginCode').textContent=codeData.login_code;document.getElementById('copyShopCode').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(codeData.login_code);message('Code boutique copié.','ok');}catch(_){message('Code boutique : '+codeData.login_code,'ok');}});await refresh();}catch(err){message(err.message||'Impossible de charger les employés.','err');document.getElementById('users').innerHTML='<tr><td colspan="5" style="text-align:center;padding:22px">Impossible de charger la liste.</td></tr>';}})();
-</script></body></html>
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(error => console.warn("GURISHA offline setup:", error));
+  });
+}
+</script>
+</body></html>
