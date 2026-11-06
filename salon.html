@@ -16,7 +16,7 @@
   <div class="field"><label>Catégorie</label><select name="category"><option>Coiffure</option><option>Tresses</option><option>Soins</option><option>Onglerie</option><option>Maquillage</option><option>Autres</option></select></div>
   <div class="field"><label>Prix (FBu) *</label><input name="price" type="number" min="0" step="1" required></div>
   <div class="field"><label>Durée estimée (minutes)</label><input name="duration_minutes" type="number" min="1" value="120" required></div>
-  <div class="field"><label>Nombre d'employés requis</label><input name="required_staff_count" type="number" min="1" value="2" required></div>
+  <div class="field"><label>Nombre de personnes nécessaires pour cette prestation</label><input name="required_staff_count" type="number" min="1" value="1" required></div>
   <div class="field"><label>Prestation à domicile possible ?</label><select name="is_home_service"><option value="true">Oui</option><option value="false">Non</option></select></div>
   <div class="field full"><label>Description visible à la cliente</label><textarea name="description" placeholder="Décrivez la coiffure ou le soin…"></textarea></div>
   <div class="field full"><label>Photos ou vidéos de la prestation</label><input name="media" type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime" multiple><small class="muted">Ajoutez des photos et/ou vidéos pour illustrer cette prestation. Maximum 50 Mo par fichier.</small></div>
@@ -28,7 +28,7 @@
  <div class="panel"><h3>Créer une équipe</h3><form id="teamForm"><div class="grid">
   <div class="field"><label>Nom de l'équipe *</label><input name="team_name" required placeholder="Ex. Équipe Tresses A"></div>
   <div class="field"><label>Chef d'équipe</label><select name="team_leader_id" id="teamLeader"><option value="">Choisir</option></select></div>
-  <div class="field full"><label>Membres de l'équipe</label><div id="teamStaffChoices" class="checklist"></div><small class="muted">Pour une équipe de tresses, sélectionnez les deux tresseuses qui travaillent généralement ensemble.</small></div>
+  <div class="field full"><label>Membres de l'équipe</label><div id="teamStaffChoices" class="checklist"></div><small class="muted">Sélectionnez autant de personnes que nécessaire : une seule personne, deux, trois, quatre ou davantage. Il n’y a pas de limite fixe.</small></div>
  </div><button class="green" type="submit" style="width:100%;margin-top:12px">Créer l'équipe</button></form></div>
  <div class="panel"><h3>Équipes enregistrées</h3><div id="teamList" class="list muted">Chargement…</div></div>
 </section>
@@ -173,7 +173,7 @@ $('appointmentForm').addEventListener('submit',async e=>{
  const appointmentNumber='SAL-'+Date.now().toString().slice(-8);
  const payload={shop_id:shopId,appointment_number:appointmentNumber,client_name:String(fd.get('client_name')).trim(),client_phone:fd.get('client_phone')||null,service_id:service.id,service_name:service.name,service_amount:Number(service.price),required_staff_count:Number(service.required_staff_count),appointment_date:fd.get('appointment_date'),start_time:fd.get('start_time'),duration_minutes:service.duration_minutes,location_mode:fd.get('location_mode'),client_address:home?fd.get('client_address'):null,transport_charge_client:home?Number(fd.get('transport_charge_client')||0):0,quote_status:fd.get('quote_status'),appointment_status:fd.get('quote_status')==='accepted'?'confirmed':'pending',notes:fd.get('notes')||null,team_id:team.id,created_by:userId};
  const {data:a,error}=await db.from('salon_appointments').insert(payload).select().single();if(error){say(error.message,true);return;}
- const assigned=teamMembers.slice(0,service.required_staff_count).map((m,i)=>({shop_id:shopId,appointment_id:a.id,staff_profile_id:m.staff_profile_id,assignment_label:i===0?'Tresseuse 1':'Tresseuse '+(i+1)}));
+ const assigned=teamMembers.slice(0,service.required_staff_count).map((m,i)=>({shop_id:shopId,appointment_id:a.id,staff_profile_id:m.staff_profile_id,assignment_label:'Intervenant '+(i+1)}));
  const ar=await db.from('salon_appointment_staff').insert(assigned);
  if(ar.error){await db.from('salon_appointments').delete().eq('id',a.id);say(ar.error.message,true);return;}
  if(home){
