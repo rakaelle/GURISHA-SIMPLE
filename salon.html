@@ -292,13 +292,21 @@ $('expenseForm').addEventListener('submit',async e=>{
   const valid=(members||[]).filter(m=>['admin','owner','manager'].includes(m.role)||roles.includes('admin')||roles.includes('owner')||roles.includes('manager')||roles.includes('receptionist'));
   if(!valid.length)throw new Error('Accès réservé à l’administrateur, au propriétaire, au gestionnaire ou à la réception.');
   const key='gurisha_active_shop_'+userId,saved=localStorage.getItem(key),selected=valid.find(m=>m.shop_id===saved)||valid[0];shopId=selected.shop_id;
+  // Afficher immédiatement un libellé de secours : l'accueil ne reste jamais sur « Chargement… ».
+  $('shopLabel').textContent='Mon salon';
   canManageStaff=['admin','owner','manager'].includes(selected.role)||roles.includes('admin')||roles.includes('owner')||roles.includes('manager');canManageFinance=canManageStaff;
   if(!canManageStaff){['catalogue','equipes','depenses','stock'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');showTab('rendezvous');}
-  const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=shop?.name||'Mon salon';
+  // Le nom de boutique est facultatif pour poursuivre le chargement du salon.
+  try{
+   const {data:shop,error:shopError}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();
+   if(!shopError&&shop?.name)$('shopLabel').textContent=shop.name;
+   else if(shopError)console.warn('Nom de boutique indisponible:',shopError.message);
+  }catch(shopError){console.warn('Nom de boutique indisponible:',shopError);}
+
   const {data:cfg,error:ce}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(ce)throw ce;
   if(!(cfg.enabled_modules||[]).some(x=>['appointments','service_management'].includes(x)))throw new Error('Activez les modules Rendez-vous ou Catalogue de prestations dans les paramètres de cette boutique.');
   const {data:staffData,error:se}=await db.from('staff_profiles').select('id,display_name,roles,is_active').eq('shop_id',shopId).eq('is_active',true).order('display_name');if(se)throw se;
   staff=staffData||[];fillStaff();await loadAll();$('homeFields').classList.add('hidden');
- }catch(err){say(err.message||'Impossible de charger le salon.',true);}
+ }catch(err){$('shopLabel').textContent=shopId?'Mon salon':'Boutique indisponible';say(err.message||'Impossible de charger le salon.',true);}
 })();
 </script></body></html>
