@@ -100,7 +100,8 @@ const authClient = window.supabase.createClient(window.GURISHA_SUPABASE_URL, win
   try {
     const {data:{session},error} = await authClient.auth.getSession();
     if(error || !session){ window.location.replace('connexion.html'); return; }
-    document.getElementById('profileEmail').textContent = session.user.email || 'Compte connecté';
+    const staffDisplayName = session.user.user_metadata?.display_name || session.user.user_metadata?.name;
+    document.getElementById('profileEmail').textContent = staffDisplayName || session.user.email || 'Compte connecté';
     document.getElementById('profileButton').addEventListener('click',()=>openModal('profileModal'));
     document.getElementById('logoutButton').addEventListener('click',async()=>{
       const {error:logoutError}=await authClient.auth.signOut();
