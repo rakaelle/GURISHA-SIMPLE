@@ -347,8 +347,8 @@ function openLot(id){const p=products.find(x=>x.id===id);if(!p)return;lotId=id;d
 document.getElementById('lotForm').addEventListener('submit',e=>{e.preventDefault();const p=products.find(x=>x.id===lotId),q=Number(document.getElementById('lotQty').value);if(!p)return;if(!Number.isInteger(q)||q<1){alert('Saisissez une quantité positive.');return;}p.lotB=Number(p.lotB||0)+q;save();render();closeModal('lotModal');});
 function exportCSV(){const data=[['Catégorie','Article','Format','Contenant','Quantité initiale','Lot A','Lot B','Stock total','Quantité vendue','Prix achat unitaire','Prix vente unitaire','Total ventes']];products.forEach(p=>data.push([p.category,p.name,p.format||'',p.container||'',p.initial||0,p.lotA||0,p.lotB||0,stock(p),p.sold||0,p.buyPrice||0,p.sellPrice||0,p.salesTotal||0]));const csv='\uFEFF'+data.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='GURISHA_STOCK.csv';a.click();URL.revokeObjectURL(url);}
 
-function switchCaisse(){document.getElementById("inventory").style.display="none";document.getElementById("caissePanel").style.display="block";renderCaisse();}
-function switchStock(){document.getElementById("caissePanel").style.display="none";document.getElementById("inventory").style.display="block";}
+function switchCaisse(){document.getElementById("inventory").style.display="none";document.getElementById("historyPanel").style.display="none";document.getElementById("caissePanel").style.display="block";renderCaisse();}
+function switchStock(){document.getElementById("caissePanel").style.display="none";document.getElementById("historyPanel").style.display="none";document.getElementById("inventory").style.display="block";}
 function addPosItem(id){const p=products.find(x=>String(x.id)===String(id));if(!p)return;const q=Number(posCart[id]||0);if(q>=stock(p)){alert("Stock insuffisant.");return;}posCart[id]=q+1;renderCaisse();}
 function adjustPosItem(id,delta){const q=Number(posCart[id]||0)+delta;const p=products.find(x=>String(x.id)===String(id));if(q<=0)delete posCart[id];else if(!p||q>stock(p)){alert("Stock insuffisant.");return;}else posCart[id]=q;renderCaisse();}
 function posTotal(){return Object.entries(posCart).reduce((sum,e)=>{const p=products.find(x=>String(x.id)===String(e[0]));return sum+(p?Number(p.sellPrice||0)*e[1]:0);},0);}
@@ -450,12 +450,8 @@ async function cancelPosSale(id){
  try{await reloadPosData();}catch(e){alert("Vente annulée. Rechargez la page pour actualiser le stock.");}
  if(window.GURISHA_ROLE==="owner"&&document.getElementById("salesHistory").style.display==="block")loadSalesHistory();
 }
-function toggleSalesHistory(){
- if(window.GURISHA_ROLE!=="owner")return;
- const root=document.getElementById("salesHistory");
- if(root.style.display==="block"){root.style.display="none";return;}
- root.style.display="block";loadSalesHistory();
-}
+function showHistoryTab(which){if(window.GURISHA_ROLE!=="owner"){alert("Historique réservé au propriétaire.");return;}document.getElementById("caissePanel").style.display="none";document.getElementById("inventory").style.display="none";document.getElementById("historyPanel").style.display="block";document.getElementById("salesHistory").style.display=which==="sales"?"block":"none";document.getElementById("purchasesHistory").style.display=which==="purchases"?"block":"none";if(which==="sales")loadSalesHistory();else loadPurchasesHistory();}
+function toggleSalesHistory(){showHistoryTab("sales");}
 async function loadSalesHistory(){
  const root=document.getElementById("salesHistory");root.textContent="Chargement...";
  const r=await window.GURISHA_SUPABASE_CLIENT.rpc("gurisha_list_sales");
