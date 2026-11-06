@@ -72,6 +72,37 @@ let client,shopId,employees=[],resetEmployeeId=null;
 async function callStaff(action,extra={}){const {data,error}=await client.functions.invoke('gurisha-staff',{body:{action,shop_id:shopId,...extra}});if(error)throw new Error(error.message||'Erreur de communication avec Supabase.');if(data&&data.error)throw new Error(data.error);return data;}
 const roleNames={manager:'Gestionnaire',cashier:'Caissier',seller:'Vendeur',stock_manager:'Magasinier',preparer:'Préparateur',order_preparer:'Préparateur de commandes',delivery_person:'Livreur',hairdresser:'Coiffeur',beautician:'Esthéticien',receptionist:'Réceptionniste',baker:'Boulanger',mechanic:'Mécanicien',driver:'Chauffeur',reservation_manager:'Responsable des réservations',delivery_manager:'Responsable des livraisons',mover:'Déménageur',team_leader:"Chef d'équipe",event_manager:'Responsable événementiel',technician:'Technicien'};
 function employeeRoles(p){return Array.isArray(p.roles)&&p.roles.length?p.roles:[p.role];}
+const roleActivityMap={
+ manager:[],cashier:['commerce','restaurant','bakery'],seller:['commerce','bakery'],
+ stock_manager:['commerce','construction_materials'],preparer:['restaurant'],
+ order_preparer:['restaurant','bakery','salon','event','other'],
+ hairdresser:['salon'],beautician:['salon'],receptionist:['salon','garage','workshop'],
+ baker:['bakery'],mechanic:['garage','workshop'],
+ delivery_person:['restaurant','bakery','delivery','event','construction_materials'],
+ driver:['transport','moving','delivery','event','construction_materials'],
+ reservation_manager:['transport','moving','event','salon'],
+ delivery_manager:['delivery','construction_materials'],mover:['moving'],
+ team_leader:['moving','event'],event_manager:['event'],technician:['event','workshop']
+};
+function applyRoleAvailability(activities,modules){
+ document.querySelectorAll('input[name="employeeRole"]').forEach(input=>{
+  const allowed=roleActivityMap[input.value]||[];
+  const visible=input.value==='manager'||(allowed.length===0)||allowed.some(a=>activities.includes(a));
+  const moduleVisible=input.value!=='cashier'||activities.some(a=>['commerce','restaurant','bakery'].includes(a))||modules.includes('pos');
+  const label=input.closest('.role-option');label.hidden=!(visible&&moduleVisible);
+  if(label.hidden)input.checked=false;
+ });
+ document.querySelectorAll('.role-group').forEach(group=>{
+  const options=group.nextElementSibling;
+  group.hidden=!options||![...options.querySelectorAll('.role-option')].some(label=>!label.hidden);
+  if(options)options.hidden=group.hidden;
+ });
+}
+async function loadShopConfiguration(){
+ const {data,error}=await client.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});
+ if(error)throw error;
+ applyRoleAvailability(data.activity_types||[],data.enabled_modules||[]);
+}
 function render(){
  document.getElementById('managers').textContent=employees.filter(x=>employeeRoles(x).includes('manager')).length;
  document.getElementById('cashiers').textContent=employees.filter(x=>employeeRoles(x).includes('cashier')).length;
@@ -95,7 +126,7 @@ async function deleteEmployee(id){const p=employees.find(x=>x.id===id);if(!p||!c
 function openReset(id){resetEmployeeId=id;document.getElementById('newPin').value='';document.getElementById('resetModal').classList.add('show');}
 function closeReset(){document.getElementById('resetModal').classList.remove('show');resetEmployeeId=null;}
 async function savePin(){const pin=document.getElementById('newPin').value;if(!/^\d{6}$/.test(pin)){alert('Entrez exactement 6 chiffres.');return;}const btn=document.getElementById('savePinBtn');btn.disabled=true;try{await callStaff('reset_pin',{employee_id:resetEmployeeId,pin});closeReset();message('Le code PIN a été modifié.','ok');}catch(err){message('Modification du code impossible : '+err.message,'err');}finally{btn.disabled=false;}}
-async function loadShopAdmin(){const codeData=await callStaff('get_shop_code');document.getElementById('shopLoginCode').textContent=codeData.login_code;await refresh();}
+async function loadShopAdmin(){await loadShopConfiguration();const codeData=await callStaff('get_shop_code');document.getElementById('shopLoginCode').textContent=codeData.login_code;await refresh();}
 (async function init(){try{if(!window.supabase||!window.GURISHA_SUPABASE_URL||!window.GURISHA_SUPABASE_KEY)throw new Error('Configuration Supabase introuvable.');client=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);const {data:{session},error}=await client.auth.getSession();if(error||!session){location.replace('connexion.html');return;}const {data:members,error:memberError}=await client.from('shop_members').select('shop_id,role').eq('user_id',session.user.id).eq('role','owner');if(memberError)throw memberError;if(!members||!members.length){throw new Error('Accès réservé au propriétaire de la boutique.');}const {data:shops,error:shopsError}=await client.from('shops').select('id,name').order('created_at');if(shopsError)throw shopsError;const owned=(shops||[]).filter(sh=>members.some(m=>m.shop_id===sh.id));const activeKey='gurisha_active_shop_'+session.user.id;shopId=localStorage.getItem(activeKey);if(!owned.some(sh=>sh.id===shopId))shopId=owned[0].id;const selector=document.getElementById('adminShopSelect');if(owned.length>1){document.getElementById('adminShopPanel').hidden=false;selector.innerHTML=owned.map(sh=>'<option value="'+sh.id+'">'+escapeHtml(sh.name)+'</option>').join('');selector.value=shopId;selector.addEventListener('change',async()=>{shopId=selector.value;localStorage.setItem(activeKey,shopId);try{employees=[];render();await loadShopAdmin();message('Boutique sélectionnée.','ok');}catch(err){message(err.message,'err');}});}const codeData=await callStaff('get_shop_code');document.getElementById('shopLoginCode').textContent=codeData.login_code;document.getElementById('copyShopCode').addEventListener('click',async()=>{try{const latest=await callStaff('get_shop_code');await navigator.clipboard.writeText(latest.login_code);message('Code boutique copié.','ok');}catch(err){message('Copie impossible : '+err.message,'err');}});await refresh();}catch(err){message(err.message||'Impossible de charger les utilisateurs.','err');document.getElementById('users').innerHTML='<tr><td colspan="5" style="text-align:center;padding:22px">Impossible de charger la liste.</td></tr>';}})();
 </script>
 <script>
