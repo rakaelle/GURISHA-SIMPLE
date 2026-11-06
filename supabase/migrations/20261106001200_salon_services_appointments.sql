@@ -126,6 +126,9 @@ create index if not exists salon_appointments_schedule_idx
 create index if not exists salon_appointments_status_idx
   on public.salon_appointments(shop_id, appointment_status, appointment_date);
 
+alter table public.salon_appointments
+  add column if not exists team_id uuid references public.salon_teams(id) on delete set null;
+
 create table if not exists public.salon_appointment_staff (
   id uuid primary key default gen_random_uuid(),
   shop_id uuid not null references public.shops(id) on delete cascade,
@@ -208,6 +211,13 @@ as $
        and sp.is_active = true
   );
 $;
+
+-- Les responsables et les employés beauté/réception peuvent voir les noms
+-- de leurs collègues afin de constituer les équipes et consulter les affectations.
+drop policy if exists salon_staff_profiles_read on public.staff_profiles;
+create policy salon_staff_profiles_read on public.staff_profiles
+for select to authenticated
+using (public.gurisha_has_shop_access(shop_id, array['hairdresser','beautician','receptionist']));
 
 -- RLS : données isolées par établissement et droits adaptés au rôle.
 do $$
