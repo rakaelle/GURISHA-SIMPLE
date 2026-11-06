@@ -70,7 +70,7 @@
 </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
-let db,shopId,userId,services=[],teams=[],staff=[],appointments=[],transportBookings=[],expenses=[];
+let db,shopId,userId,canManageStaff=false,canManageFinance=false,services=[],teams=[],staff=[],appointments=[],transportBookings=[],expenses=[];
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>Number(v||0).toLocaleString('fr-FR')+' FBu';
@@ -178,7 +178,7 @@ $('appointmentForm').addEventListener('submit',async e=>{
   const {error:te}=await db.from('salon_transport_bookings').insert({shop_id:shopId,appointment_id:a.id,transport_type:'taxi',booking_status:'to_book',pickup_address:String(fd.get('pickup_address')).trim(),destination_address:String(fd.get('client_address')).trim(),pickup_at:new Date(fd.get('appointment_date')+'T'+fd.get('start_time')).toISOString(),passenger_count:service.required_staff_count,client_charge_amount:Number(fd.get('transport_charge_client')||0),booked_by:userId});
   if(te){await db.from('salon_appointments').delete().eq('id',a.id);say('Rendez-vous non finalisé : réservation taxi impossible. '+te.message,true);return;}
  }
- f.reset();$('homeFields').classList.add('hidden');updateQuote();say('Rendez-vous enregistré, équipe affectée'+(home+' et taxi à réserver'.replace('false','')||'')+'.');await loadAll();
+ f.reset();$('homeFields').classList.add('hidden');updateQuote();say('Rendez-vous enregistré, équipe affectée'+(home?' et taxi à réserver':'')+'.');await loadAll();
 });
 $('expenseForm').addEventListener('submit',async e=>{
  e.preventDefault();const fd=new FormData(e.currentTarget);
