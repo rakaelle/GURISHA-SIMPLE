@@ -122,7 +122,7 @@ async function loadAll(){
   db.from('salon_services').select('*').eq('shop_id',shopId).eq('is_active',true).order('category').order('name'),
   db.from('salon_teams').select('*').eq('shop_id',shopId).eq('is_active',true).order('team_name'),
   db.from('salon_appointments').select('*').eq('shop_id',shopId).order('appointment_date',{ascending:false}).limit(100),
-  db.from('salon_expenses').select('*').eq('shop_id',shopId).order('paid_at',{ascending:false}).limit(100)
+  canManageFinance?db.from('salon_expenses').select('*').eq('shop_id',shopId).order('paid_at',{ascending:false}).limit(100):Promise.resolve({data:[],error:null})
  ]);
  for(const r of [sr,tr,ar,xr])if(r.error)throw r.error;
  services=sr.data||[];teams=tr.data||[];appointments=ar.data||[];expenses=xr.data||[];
@@ -193,6 +193,9 @@ $('expenseForm').addEventListener('submit',async e=>{
   const {data:members,error:me}=await db.from('shop_members').select('shop_id,role').eq('user_id',userId);if(me)throw me;
   const roles=Array.isArray(session.user.user_metadata?.gurisha_roles)?session.user.user_metadata.gurisha_roles:[];
   const valid=(members||[]).filter(m=>['owner','manager'].includes(m.role)||roles.includes('manager')||roles.includes('receptionist'));
+  canManageStaff=(members||[]).some(m=>['owner','manager'].includes(m.role))||roles.includes('manager');
+  canManageFinance=canManageStaff;
+  if(!canManageStaff){['catalogue','equipes','depenses'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');}
   if(!valid.length)throw new Error('Accès réservé au gestionnaire ou à la réception.');
   const key='gurisha_active_shop_'+userId,saved=localStorage.getItem(key),selected=valid.find(m=>m.shop_id===saved)||valid[0];shopId=selected.shop_id;
   const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=shop?.name||'Mon salon';
