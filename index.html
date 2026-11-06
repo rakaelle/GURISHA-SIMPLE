@@ -70,6 +70,10 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 #posSuccess .sale-cancel{width:100%;margin-top:13px;padding:10px 12px;border:1px solid #f0d5d2;border-radius:9px;background:#fff7f6;color:#a34c43;font-size:12px;font-weight:700}
 #posSuccess .sale-cancel:hover{background:#ffefed}
 </style>
+
+<meta name="theme-color" content="#198754">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/gurisha-icon.svg" type="image/svg+xml">
 </head>
 <body>
 <header class="app-header">
@@ -532,6 +536,14 @@ window.gurishaInit=async function(){
   document.querySelector('footer').textContent='GURISHA SIMPLE — Synchronisé. Actualisation automatique activée.';
   window.setInterval(refreshSharedData,4000);
 };
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(error => console.warn("GURISHA offline setup:", error));
+  });
+}
 </script>
 </body>
 </html>
