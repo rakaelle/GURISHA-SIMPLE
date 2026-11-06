@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#198754"><title>GURISHA — Mes modules</title>
+<style>
+:root{--g:#198754;--gd:#126b42;--gl:#e8f5ed;--bg:#f4f8f5;--bd:#dce7df;--tx:#26372d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Arial,sans-serif;visibility:hidden}header{background:var(--g);color:white;text-align:center;padding:18px}header h1{margin:0;letter-spacing:2px}main{max-width:1050px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:5px 0 15px}button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:pointer}.green{background:var(--g);color:white}.light{background:var(--gl);color:var(--gd)}.muted{font-size:12px;color:#718078;line-height:1.5}.notice{background:var(--gl);color:var(--gd);padding:12px;border-radius:10px;margin:12px 0;font-size:13px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.module{background:#fff;border:1px solid var(--bd);border-radius:13px;padding:15px;display:flex;flex-direction:column;min-height:180px}.module h3{margin:0 0 7px;color:var(--gd);font-size:16px}.module p{font-size:12px;color:#64766b;line-height:1.5;margin:0 0 13px;flex:1}.module .status{font-size:11px;font-weight:700;color:#6b7c71;margin-bottom:10px}.module button{width:100%}.module button:disabled{background:#edf1ee;color:#758078;cursor:not-allowed}.empty{background:white;padding:22px;border:1px dashed var(--bd);border-radius:12px;text-align:center;color:#718078}.section{margin:20px 0 10px;color:var(--gd);font-size:17px}
+@media(max-width:600px){main{padding:10px}.grid{grid-template-columns:1fr 1fr}.module{padding:12px;min-height:190px}.module h3{font-size:14px}.module p{font-size:11px}}
+@media(max-width:390px){.grid{grid-template-columns:1fr}}
+</style></head><body><header><h1>GURISHA</h1><p>Votre espace de gestion professionnel</p></header><main>
+<div class="top"><div><h2 style="margin:0;color:var(--gd)">Mes modules</h2><small id="shopLabel" class="muted">Chargement…</small></div><button class="light" onclick="location.href='index.html'">← Accueil</button></div>
+<div id="notice" class="notice" hidden></div><h3 class="section">Fonctionnalités activées</h3><div id="moduleGrid" class="grid"><div class="empty">Chargement de vos modules…</div></div>
+<p class="muted" style="margin-top:18px">Les modules affichés dépendent des options activées pour cet établissement. Les fonctions encore en construction seront ajoutées progressivement sans toucher aux données des autres activités.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
+const db=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const definitions={
+ commerce:{title:"Stock et achats",desc:"Articles, catégories, fournisseurs, approvisionnement, lots et inventaire.",url:"index.html",ready:true,icon:"📦"},
+ pos:{title:"Caisse et ventes",desc:"Enregistrer les ventes, encaisser les clients et consulter les opérations autorisées.",url:"index.html",ready:true,icon:"🧾"},
+ fast_food:{title:"Restaurant et fast-food",desc:"Menus, recettes, ingrédients, emballages, commandes et préparation en cuisine.",url:"fast-food-menu.html",ready:true,icon:"🍽️"},
+ appointments:{title:"Rendez-vous",desc:"Gérer les disponibilités, les réservations et le planning des employés.",url:"",ready:false,icon:"📅"},
+ service_management:{title:"Catalogue de prestations et commandes",desc:"Créer des services comme coiffure, soins, onglerie ou réparation, fixer les tarifs et recevoir les demandes.",url:"",ready:false,icon:"✂️"},
+ transport:{title:"Transport de personnes",desc:"Gérer les chauffeurs, véhicules, transferts, trajets et réservations.",url:"",ready:false,icon:"🚗"},
+ delivery:{title:"Livraison et colis",desc:"Organiser les courses, les enlèvements, les livreurs et le suivi des colis.",url:"",ready:false,icon:"📦"},
+ moving:{title:"Déménagement",desc:"Préparer les demandes, estimer les volumes, affecter les équipes et suivre les missions.",url:"",ready:false,icon:"🚚"},
+ production:{title:"Production et fabrication",desc:"Suivre les matières premières, les étapes de fabrication et les commandes personnalisées.",url:"",ready:false,icon:"🏭"},
+ event_management:{title:"Événementiel et location",desc:"Gérer les événements, les réservations, les équipements et les locations.",url:"",ready:false,icon:"🎪"}
+};
+(async()=>{
+ try{
+  const {data:{session}}=await db.auth.getSession();if(!session){location.replace('connexion.html');return;}
+  const {data:members,error:merr}=await db.from('shop_members').select('shop_id,role').eq('user_id',session.user.id);if(merr)throw merr;
+  if(!members||!members.length)throw new Error('Aucun établissement associé à ce compte.');
+  const activeKey='gurisha_active_shop_'+session.user.id;
+  let shopId=localStorage.getItem(activeKey);if(!members.some(m=>m.shop_id===shopId))shopId=members[0].shop_id;
+  const member=members.find(m=>m.shop_id===shopId);
+  let shopName='Mon établissement';
+  if(member.role==='owner'){const {data:s,error:se}=await db.from('shops').select('id,name').eq('id',shopId).maybeSingle();if(se)throw se;if(s&&s.name)shopName=s.name;}
+  $('shopLabel').textContent=shopName;
+  const {data:cfg,error}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(error)throw error;
+  const modules=cfg&&Array.isArray(cfg.enabled_modules)?cfg.enabled_modules:[];
+  const grid=$('moduleGrid');grid.innerHTML='';
+  modules.forEach(key=>{
+   const d=definitions[key];if(!d)return;
+   const card=document.createElement('article');card.className='module';
+   const title=document.createElement('h3');title.textContent=d.icon+' '+d.title;
+   const desc=document.createElement('p');desc.textContent=d.desc;
+   const status=document.createElement('div');status.className='status';status.textContent=d.ready?'Disponible':'Mise en place progressive';
+   const btn=document.createElement('button');btn.className=d.ready?'green':'light';btn.textContent=d.ready?'Ouvrir le module':'En préparation';btn.disabled=!d.ready;
+   if(d.ready)btn.addEventListener('click',()=>location.href=d.url);
+   card.append(title,desc,status,btn);grid.appendChild(card);
+  });
+  if(!grid.children.length)grid.innerHTML='<div class="empty">Aucun module n’est activé. Contactez le propriétaire de l’établissement pour configurer ses activités.</div>';
+  document.body.style.visibility='visible';
+ }catch(e){$('notice').hidden=false;$('notice').textContent=e.message||'Impossible de charger les modules.';$('moduleGrid').innerHTML='';document.body.style.visibility='visible';}
+})();
+</script></body></html>
