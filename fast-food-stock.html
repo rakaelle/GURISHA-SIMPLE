@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#198754">
+<title>GURISHA — Stock Fast-Food</title>
+<style>
+:root{--g:#198754;--gd:#126b42;--gl:#e8f5ed;--bg:#f4f8f5;--bd:#dce7df;--tx:#26372d;--red:#b8323c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Arial,sans-serif}
+header{background:var(--g);color:#fff;text-align:center;padding:18px 12px}header h1{margin:0;letter-spacing:2px}header p{margin:6px 0 0;font-size:13px}
+main{max-width:1100px;margin:auto;padding:14px}.top{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin:4px 0 14px}
+button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:pointer}.green{background:var(--g);color:#fff}.light{background:var(--gl);color:var(--gd)}.plain{background:#fff;border:1px solid var(--bd);color:var(--gd)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-bottom:14px}.card,.panel{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px}.card small{display:block;color:#718078;margin-bottom:7px}.card strong{font-size:19px;color:var(--gd)}
+.tabs{display:flex;gap:7px;overflow:auto;margin:12px 0}.tabs button{white-space:nowrap}.tabs button.active{background:var(--g);color:#fff}
+.search{width:100%;padding:12px;border:1px solid var(--bd);border-radius:9px;margin-bottom:12px;font-size:14px}
+.group{background:#fff;border:1px solid var(--bd);border-radius:12px;margin:10px 0;overflow:hidden}.group h3{margin:0;padding:12px;background:var(--gl);font-size:14px;color:var(--gd)}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px;font-size:12px}th,td{text-align:left;padding:10px 9px;border-bottom:1px solid #edf1ee;white-space:nowrap}th{background:#f8faf8;color:#53645a}
+.good{color:var(--gd);font-weight:700}.low{color:#b45b16;font-weight:700}.expired{color:var(--red);font-weight:700}
+.empty{padding:25px;text-align:center;color:#718078}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:#fff}.field textarea{min-height:70px}.field.full{grid-column:1/-1}.formactions{display:flex;gap:8px;margin-top:12px}.formactions button{flex:1}
+.notice{padding:11px;border-radius:9px;background:var(--gl);color:var(--gd);font-size:12px;line-height:1.5;margin:10px 0}.error{background:#fdebed;color:#a52b35}.hidden{display:none!important}
+@media(max-width:560px){main{padding:10px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.top h2{font-size:18px}}
+</style>
+</head>
+<body>
+<header><h1>GURISHA</h1><p>Gestion indépendante du stock Fast-Food</p></header>
+<main>
+ <div class="top"><div><h2 style="margin:0;color:var(--gd)">Stock Fast-Food</h2><small id="shopLabel">Chargement de la boutique…</small></div><button class="plain" onclick="location.href='index.html'">← Retour à GURISHA</button></div>
+ <div id="notice" class="notice hidden"></div>
+ <div class="cards">
+  <div class="card"><small>Ingrédients actifs</small><strong id="countIngredients">0</strong></div>
+  <div class="card"><small>Quantité totale (unités de base)</small><strong id="countLots">0</strong></div>
+  <div class="card"><small>Lots bientôt expirés</small><strong id="nearExpiry">0</strong></div>
+  <div class="card"><small>Ingrédients à réapprovisionner</small><strong id="lowStock">0</strong></div>
+ </div>
+ <div class="tabs">
+  <button class="light active" data-tab="overview">Stock disponible</button>
+  <button class="light" data-tab="ingredients">Ingrédients</button>
+  <button class="light" data-tab="purchase">Enregistrer un achat</button>
+  <button class="light" data-tab="movements">Mouvements</button>
+ </div>
+ <section id="overview" class="panel">
+  <div class="top"><h3 style="margin:0">État du stock cuisine</h3><button class="plain" id="refresh">↻ Actualiser</button></div>
+  <input id="searchStock" class="search" placeholder="Rechercher un ingrédient…" />
+  <div id="stockList"><div class="empty">Chargement…</div></div>
+ </section>
+ <section id="ingredients" class="panel hidden">
+  <h3 style="margin-top:0">Ajouter un ingrédient</h3>
+  <form id="ingredientForm">
+   <div class="formgrid">
+    <div class="field"><label>Nom de l'ingrédient *</label><input name="name" required placeholder="Ex. Mayonnaise"></div>
+    <div class="field"><label>Catégorie</label><select name="category"><option>Viandes et poissons</option><option>Légumes et fruits</option><option>Farines et céréales</option><option>Sauces et condiments</option><option>Huiles et liquides</option><option>Produits laitiers</option><option>Emballages</option><option>Autres</option></select></div>
+    <div class="field"><label>Unité de stock *</label><select name="base_unit" required><option value="g">Grammes (g)</option><option value="ml">Millilitres (ml)</option><option value="piece">Pièces / unités</option></select></div>
+    <div class="field"><label>Unité d'achat habituelle</label><input name="purchase_unit" placeholder="Ex. pot de 1 kg, bouteille"></div>
+    <div class="field"><label>Conversion par unité d'achat</label><input name="default_conversion_factor" type="number" min="0.001" step="0.001" value="1" required></div>
+    <div class="field"><label>Seuil d'alerte (unité de stock)</label><input name="minimum_stock" type="number" min="0" step="0.001" value="0"></div>
+    <div class="field full"><label>Notes (facultatif)</label><textarea name="notes" placeholder="Marque, format, fournisseur habituel…"></textarea></div>
+   </div>
+   <div class="notice">Exemple : un pot de mayonnaise de 1 kg = unité de stock g, unité d'achat « pot de 1 kg », conversion 1000.</div>
+   <div class="formactions"><button class="green" type="submit">Enregistrer l'ingrédient</button></div>
+  </form>
+  <div id="ingredientList"></div>
+ </section>
+ <section id="purchase" class="panel hidden">
+  <h3 style="margin-top:0">Enregistrer un achat / nouveau lot</h3>
+  <form id="purchaseForm">
+   <div class="formgrid">
+    <div class="field full"><label>Ingrédient *</label><select name="ingredient_id" id="purchaseIngredient" required><option value="">Choisir un ingrédient</option></select></div>
+    <div class="field"><label>Quantité achetée *</label><input name="purchase_quantity" type="number" min="0.001" step="0.001" required placeholder="Ex. 2"></div>
+    <div class="field"><label>Unité d'achat *</label><input name="purchase_unit" required placeholder="Ex. pots de 1 kg"></div>
+    <div class="field"><label>Conversion en unité de stock *</label><input name="conversion_factor" type="number" min="0.001" step="0.001" required placeholder="Ex. 1000"></div>
+    <div class="field"><label>Prix d'achat par unité (FBu) *</label><input name="unit_cost" type="number" min="0" step="1" required placeholder="Ex. 12000"></div>
+    <div class="field"><label>Date d'achat *</label><input name="purchase_date" type="date" required></div>
+    <div class="field"><label>Date d'expiration</label><input name="expiration_date" type="date"></div>
+    <div class="field"><label>Fournisseur</label><input name="supplier" placeholder="Nom du fournisseur"></div>
+    <div class="field"><label>Référence du lot (facultatif)</label><input name="lot_code" placeholder="Numéro ou référence"></div>
+    <div class="field full"><label>Notes</label><textarea name="notes" placeholder="Informations complémentaires…"></textarea></div>
+   </div>
+   <div id="purchasePreview" class="notice">Le stock sera converti automatiquement dans l'unité de base de l'ingrédient.</div>
+   <div class="formactions"><button class="green" type="submit">Enregistrer l'achat</button></div>
+  </form>
+ </section>
+ <section id="movements" class="panel hidden">
+  <h3 style="margin-top:0">Historique des mouvements</h3><div id="movementList"><div class="empty">Chargement…</div></div>
+ </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+let db,shopId,userId,role,ingredients=[],lots=[],movements=[];
+const $=id=>document.getElementById(id);
+const fmt=n=>Number(n||0).toLocaleString('fr-FR',{maximumFractionDigits:3});
+const money=n=>Number(n||0).toLocaleString('fr-FR')+' FBu';
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function say(msg,isError=false){$('notice').textContent=msg;$('notice').className='notice'+(isError?' error':'');}
+function unitLabel(u){return u==='g'?'g':u==='ml'?'ml':'pièce(s)';}
+function stockFor(id){return lots.filter(l=>l.ingredient_id===id).reduce((s,l)=>s+Number(l.remaining_quantity_base||0),0);}
+function showTab(id){document.querySelectorAll('main section').forEach(s=>s.classList.toggle('hidden',s.id!==id));document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='movements')loadMovements();}
+async function loadAll(){
+ const [ir,lr]=await Promise.all([
+  db.from('fast_food_ingredients').select('*').eq('shop_id',shopId).eq('is_active',true).order('category').order('name'),
+  db.from('fast_food_ingredient_lots').select('*').eq('shop_id',shopId).order('expiration_date',{ascending:true,nullsFirst:false})
+ ]);
+ if(ir.error)throw ir.error;if(lr.error)throw lr.error;
+ ingredients=ir.data||[];lots=lr.data||[];
+ const total=ingredients.reduce((s,i)=>s+stockFor(i.id),0);
+ const low=ingredients.filter(i=>stockFor(i.id)<=Number(i.minimum_stock||0)).length;
+ const now=new Date();now.setHours(0,0,0,0);const limit=new Date(now);limit.setDate(limit.getDate()+30);
+ const expiry=lots.filter(l=>Number(l.remaining_quantity_base)>0&&l.expiration_date&&new Date(l.expiration_date+'T00:00:00')>=now&&new Date(l.expiration_date+'T00:00:00')<=limit).length;
+ $('countIngredients').textContent=ingredients.length;$('countLots').textContent=fmt(total);$('nearExpiry').textContent=expiry;$('lowStock').textContent=low;
+ $('purchaseIngredient').innerHTML='<option value="">Choisir un ingrédient</option>'+ingredients.map(i=>'<option value="'+i.id+'">'+esc(i.name)+' ('+unitLabel(i.base_unit)+')</option>').join('');
+ renderStock();renderIngredients();
+}
+function renderStock(){
+ const q=$('searchStock').value.toLowerCase().trim();
+ const list=ingredients.filter(i=>i.name.toLowerCase().includes(q)||i.category.toLowerCase().includes(q));
+ if(!list.length){$('stockList').innerHTML='<div class="empty">Aucun ingrédient. Ajoute ton premier ingrédient dans l’onglet Ingrédients.</div>';return;}
+ const cats=[...new Set(list.map(i=>i.category))];
+ $('stockList').innerHTML=cats.map(cat=>{
+  const rows=list.filter(i=>i.category===cat).map(i=>{
+   const own=lots.filter(l=>l.ingredient_id===i.id&&Number(l.remaining_quantity_base)>0);
+   const qty=stockFor(i.id),isLow=qty<=Number(i.minimum_stock||0);
+   const next=own.filter(l=>l.expiration_date).sort((a,b)=>a.expiration_date.localeCompare(b.expiration_date))[0];
+   return '<tr><td><strong>'+esc(i.name)+'</strong><small style="display:block;color:#718078">'+esc(i.purchase_unit||'')+'</small></td><td class="'+(isLow?'low':'good')+'">'+fmt(qty)+' '+unitLabel(i.base_unit)+'</td><td>'+fmt(i.minimum_stock)+' '+unitLabel(i.base_unit)+'</td><td>'+(next?esc(next.expiration_date):'—')+'</td><td>'+own.length+'</td><td><button class="light" onclick="selectPurchase(\''+i.id+'\')">Ajouter achat</button></td></tr>';
+  }).join('');
+  return '<div class="group"><h3>'+esc(cat)+'</h3><div class="tablewrap"><table><thead><tr><th>Ingrédient</th><th>Stock disponible</th><th>Seuil d’alerte</th><th>Prochaine expiration</th><th>Lots actifs</th><th>Action</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+ }).join('');
+}
+function renderIngredients(){
+ $('ingredientList').innerHTML='<h3>Ingrédients enregistrés</h3>'+(ingredients.length?'<div class="tablewrap"><table><thead><tr><th>Nom</th><th>Catégorie</th><th>Unité</th><th>Unité d’achat</th><th>Conversion</th><th>Stock actuel</th></tr></thead><tbody>'+ingredients.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+esc(i.category)+'</td><td>'+unitLabel(i.base_unit)+'</td><td>'+esc(i.purchase_unit)+'</td><td>'+fmt(i.default_conversion_factor)+'</td><td>'+fmt(stockFor(i.id))+' '+unitLabel(i.base_unit)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">Aucun ingrédient enregistré.</div>');
+}
+function selectPurchase(id){showTab('purchase');$('purchaseIngredient').value=id;const i=ingredients.find(x=>x.id===id);if(i){$('purchaseForm').elements.purchase_unit.value=i.purchase_unit||'';$('purchaseForm').elements.conversion_factor.value=i.default_conversion_factor||1;}}
+async function loadMovements(){
+ $('movementList').innerHTML='<div class="empty">Chargement…</div>';
+ const {data,error}=await db.from('fast_food_stock_movements').select('*').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(100);
+ if(error){$('movementList').textContent='Historique indisponible : '+error.message;return;}
+ movements=data||[];
+ const names=Object.fromEntries(ingredients.map(i=>[i.id,i.name]));
+ $('movementList').innerHTML=movements.length?'<div class="tablewrap"><table><thead><tr><th>Date</th><th>Ingrédient</th><th>Type</th><th>Quantité</th><th>Référence / notes</th></tr></thead><tbody>'+movements.map(m=>'<tr><td>'+new Date(m.created_at).toLocaleString('fr-FR')+'</td><td>'+esc(names[m.ingredient_id]||'Ingrédient')+'</td><td>'+esc(m.movement_type)+'</td><td>'+fmt(m.quantity_base)+'</td><td>'+esc([m.reference,m.notes].filter(Boolean).join(' · '))+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">Aucun mouvement enregistré.</div>';
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+$('searchStock').addEventListener('input',renderStock);$('refresh').addEventListener('click',()=>loadAll().catch(e=>say(e.message,true)));
+$('ingredientForm').addEventListener('submit',async e=>{
+ e.preventDefault();const f=e.currentTarget,fd=new FormData(f);
+ const payload={shop_id:shopId,name:String(fd.get('name')).trim(),category:fd.get('category'),base_unit:fd.get('base_unit'),purchase_unit:String(fd.get('purchase_unit')||'').trim()||'piece',default_conversion_factor:Number(fd.get('default_conversion_factor')),minimum_stock:Number(fd.get('minimum_stock')||0),notes:String(fd.get('notes')||'').trim()||null,created_by:userId};
+ const {error}=await db.from('fast_food_ingredients').insert(payload);
+ if(error){say('Enregistrement impossible : '+error.message,true);return;}
+ f.reset();f.elements.default_conversion_factor.value='1';f.elements.minimum_stock.value='0';say('Ingrédient ajouté au stock Fast-Food.');await loadAll();
+});
+$('purchaseForm').addEventListener('submit',async e=>{
+ e.preventDefault();const f=e.currentTarget,fd=new FormData(f),ingredient=ingredients.find(i=>i.id===fd.get('ingredient_id'));
+ if(!ingredient){say('Choisis un ingrédient.',true);return;}
+ const quantity=Number(fd.get('purchase_quantity')),factor=Number(fd.get('conversion_factor')),cost=Number(fd.get('unit_cost'));
+ if(!(quantity>0&&factor>0&&cost>=0)){say('Vérifie les quantités et le prix.',true);return;}
+ const expiration=fd.get('expiration_date')||null,purchaseDate=fd.get('purchase_date');
+ if(expiration&&expiration<purchaseDate){say('La date d’expiration ne peut pas précéder la date d’achat.',true);return;}
+ const payload={shop_id:shopId,ingredient_id:ingredient.id,lot_code:String(fd.get('lot_code')||'').trim()||null,supplier:String(fd.get('supplier')||'').trim()||null,purchase_date:purchaseDate,expiration_date:expiration,purchase_quantity:quantity,purchase_unit:String(fd.get('purchase_unit')).trim(),conversion_factor:factor,initial_quantity_base:quantity*factor,remaining_quantity_base:quantity*factor,unit_cost:cost,notes:String(fd.get('notes')||'').trim()||null,created_by:userId};
+ const {error}=await db.from('fast_food_ingredient_lots').insert(payload);
+ if(error){say('Achat non enregistré : '+error.message,true);return;}
+ f.reset();f.elements.purchase_date.value=new Date().toISOString().slice(0,10);say('Achat enregistré. Le lot et son entrée de stock ont été créés.');await loadAll();
+});
+$('purchaseForm').elements.purchase_date.value=new Date().toISOString().slice(0,10);
+(async function init(){
+ try{
+  db=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
+  const {data:{session},error}=await db.auth.getSession();if(error||!session){location.replace('connexion.html');return;}
+  userId=session.user.id;
+  const {data:members,error:memberError}=await db.from('shop_members').select('shop_id,role').eq('user_id',userId);
+  if(memberError)throw memberError;
+  const valid=(members||[]).filter(m=>['owner','manager','gestionnaire'].includes(m.role));
+  if(!valid.length)throw new Error('Accès réservé à l’administrateur et au gestionnaire.');
+  role=valid[0].role;
+  const activeKey='gurisha_active_shop_'+userId;
+  const saved=localStorage.getItem(activeKey);
+  const selected=valid.find(m=>m.shop_id===saved)||valid[0];
+  shopId=selected.shop_id;
+  const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();
+  $('shopLabel').textContent=(shop?.name||'Ma boutique')+' · données séparées du stock boutique';
+  await loadAll();
+ }catch(err){say(err.message||'Impossible de charger le stock Fast-Food.',true);$('stockList').innerHTML='<div class="empty">Vérifie les droits du compte et la connexion.</div>';}
+})();
+</script>
+</body>
+</html>
