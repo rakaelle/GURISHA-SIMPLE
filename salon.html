@@ -98,6 +98,16 @@ let db,shopId,userId,canManageStaff=false,canManageFinance=false,services=[],tea
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>Number(v||0).toLocaleString('fr-FR')+' FBu';
+// Le menu profil reste fonctionnel même si le chargement des données échoue.
+$('profileButton').addEventListener('click',()=>$('profileModal').classList.add('open'));
+$('closeProfile').addEventListener('click',()=>$('profileModal').classList.remove('open'));
+$('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))$('profileModal').classList.remove('open');});
+$('logoutButton').addEventListener('click',async()=>{
+ try{
+  if(!db)db=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
+  const {error}=await db.auth.signOut();if(error)throw error;location.replace('connexion.html');
+ }catch(error){say('Déconnexion impossible : '+(error.message||error),true);}
+});
 function say(message,error=false){$('notice').textContent=message;$('notice').className='notice'+(error?' error':'');$('notice').classList.remove('hidden');}
 function showTab(name){document.querySelectorAll('.tab-panel').forEach(x=>x.classList.toggle('hidden',x.id!==name));document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));}
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.tab==='parametres'){location.href='administration.html';return;}showTab(b.dataset.tab);}));
@@ -273,13 +283,10 @@ $('expenseForm').addEventListener('submit',async e=>{
 });
 (async function init(){
  try{
+  if(!window.supabase||!window.GURISHA_SUPABASE_URL||!window.GURISHA_SUPABASE_KEY)throw new Error('Configuration Supabase introuvable.');
   db=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
   const {data:{session},error}=await db.auth.getSession();if(error||!session){location.replace('connexion.html');return;}userId=session.user.id;
   $('profileIdentity').textContent=session.user.user_metadata?.display_name||session.user.user_metadata?.name||session.user.email||'Compte connecté';
-  $('profileButton').addEventListener('click',()=>$('profileModal').classList.add('open'));
-  $('closeProfile').addEventListener('click',()=>$('profileModal').classList.remove('open'));
-  $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))$('profileModal').classList.remove('open');});
-  $('logoutButton').addEventListener('click',async()=>{const {error:logoutError}=await db.auth.signOut();if(logoutError){say('Déconnexion impossible : '+logoutError.message,true);return;}location.replace('connexion.html');});
   const {data:members,error:me}=await db.from('shop_members').select('shop_id,role').eq('user_id',userId);if(me)throw me;
   const roles=Array.isArray(session.user.user_metadata?.gurisha_roles)?session.user.user_metadata.gurisha_roles:[];
   const valid=(members||[]).filter(m=>['admin','owner','manager'].includes(m.role)||roles.includes('admin')||roles.includes('owner')||roles.includes('manager')||roles.includes('receptionist'));
