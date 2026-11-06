@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#198754"><title>GURISHA — Caisse Fast-Food</title>
+<style>
+:root{--g:#198754;--gd:#126b42;--gl:#e8f5ed;--bg:#f4f8f5;--bd:#dce7df;--tx:#26372d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Arial,sans-serif}header{background:var(--g);color:#fff;text-align:center;padding:17px}header h1{margin:0;letter-spacing:2px}main{max-width:1000px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;margin:4px 0 14px}button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:pointer}.green{background:var(--g);color:#fff}.light{background:var(--gl);color:var(--gd)}.panel{background:#fff;border:1px solid var(--bd);border-radius:13px;padding:14px;margin-bottom:13px}.layout{display:grid;grid-template-columns:1fr 1fr;gap:12px}.menuitem{border:1px solid var(--bd);border-radius:10px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}.menuitem strong{display:block;color:var(--gd)}.muted{font-size:12px;color:#718078}.pack{background:var(--gl);padding:8px 10px;border-radius:8px;margin:8px 0;font-size:12px;color:var(--gd);line-height:1.5}.qty{width:64px;padding:8px;border:1px solid var(--bd);border-radius:7px}.row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #edf1ee;padding:10px 0}.notice{background:var(--gl);color:var(--gd);padding:11px;border-radius:9px;font-size:12px;line-height:1.5;margin:10px 0}.error{background:#fdebed;color:#a52b35}.empty{text-align:center;padding:22px;color:#718078}.field label{display:block;font-size:12px;font-weight:700;margin:10px 0 5px}.field input,.field textarea{width:100%;padding:11px;border:1px solid var(--bd);border-radius:8px;font-size:14px}.total{font-size:20px;font-weight:800;color:var(--gd);text-align:right;margin:12px 0}
+@media(max-width:700px){main{padding:10px}.layout{grid-template-columns:1fr}}
+</style></head><body><header><h1>GURISHA</h1><p>Caisse Fast-Food</p></header><main>
+<div class="top"><div><h2 style="margin:0;color:var(--gd)">Nouvelle commande</h2><small id="shopLabel">Chargement…</small></div><button class="light" onclick="location.href='index.html'">← Retour</button></div>
+<div id="notice" class="notice" hidden></div>
+<div class="layout"><section class="panel"><h3 style="margin-top:0">Menu disponible</h3><div id="menuList" class="empty">Chargement…</div></section>
+<section class="panel"><h3 style="margin-top:0">Commande en cours</h3><div class="field"><label>Mode de service</label><select id="service"><option value="takeaway">À emporter</option><option value="dine_in">Sur place</option></select></div><div id="cart" class="empty">Ajoute un plat au panier.</div><div class="total" id="total">Total : 0 FBu</div><div class="field"><label>Note générale (facultatif)</label><textarea id="notes" rows="2" placeholder="Ex. Client attend au comptoir"></textarea></div><div class="field"><label>Paiement</label><select id="payment"><option value="paid">Payée</option><option value="unpaid">À payer</option></select></div><button class="green" id="send" style="width:100%">Envoyer en cuisine</button></section></div>
+</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
+let db,shopId,userId,role,menus=[],cart=[];
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>Number(n||0).toLocaleString('fr-FR')+' FBu';
+function say(t,e=false){$('notice').hidden=false;$('notice').textContent=t;$('notice').className='notice'+(e?' error':'');}
+async function loadMenus(){
+ const {data,error}=await db.from('fast_food_menu_items').select('id,name,category,description,sale_price').eq('shop_id',shopId).eq('is_active',true).order('category').order('name');if(error)throw error;menus=data||[];
+ const ids=menus.map(x=>x.id);let comps=[];
+ if(ids.length){const r=await db.from('fast_food_menu_components').select('menu_item_id,component_name,quantity_per_menu,unit,service_mode').eq('shop_id',shopId).eq('component_type','packaging').in('menu_item_id',ids);if(r.error)throw r.error;comps=r.data||[];}
+ menus=menus.map(m=>({...m,packaging:comps.filter(c=>c.menu_item_id===m.id)}));
+ $('menuList').innerHTML=menus.length?menus.map(m=>'<article class="menuitem"><div><strong>'+esc(m.name)+'</strong><div class="muted">'+esc(m.description||m.category)+' · '+money(m.sale_price)+'</div><div class="pack"><b>Emballage prévu :</b><br>'+packText(m,$('service').value)+'</div></div><button class="green" onclick="addToCart(\''+m.id+'\')">Ajouter</button></article>').join(''):'<div class="empty">Aucun plat actif. Demande au gestionnaire de créer le menu.</div>';
+}
+function packText(m,mode){const p=m.packaging.filter(x=>x.service_mode==='all'||x.service_mode===mode);return p.length?p.map(x=>esc(x.component_name)+' × '+esc(x.quantity_per_menu)+' '+esc(x.unit==='g'?'g':x.unit==='ml'?'ml':'pièce(s)')).join('<br>'):'Aucun emballage prévu pour ce mode.';}
+function addToCart(id){const m=menus.find(x=>x.id===id);if(!m)return;const item=cart.find(x=>x.menu_item_id===id);if(item)item.quantity++;else cart.push({menu_item_id:m.id,name:m.name,quantity:1,unit_price:Number(m.sale_price),packaging:m.packaging});renderCart();}
+function changeQty(id,d){const x=cart.find(x=>x.menu_item_id===id);if(!x)return;x.quantity+=d;if(x.quantity<=0)cart=cart.filter(y=>y!==x);renderCart();}
+function renderCart(){
+ const mode=$('service').value;
+ $('cart').innerHTML=cart.length?cart.map(x=>'<div class="row"><div><b>'+esc(x.name)+'</b><div class="muted">'+money(x.unit_price)+' / unité</div><div class="pack"><b>À emballer :</b><br>'+packText(x,mode)+'</div></div><div style="white-space:nowrap"><button class="light" onclick="changeQty(\''+x.menu_item_id+'\',-1)">−</button> '+x.quantity+' <button class="light" onclick="changeQty(\''+x.menu_item_id+'\',1)">+</button></div></div>').join(''):'<div class="empty">Ajoute un plat au panier.</div>';
+ $('total').textContent='Total : '+money(cart.reduce((s,x)=>s+x.quantity*x.unit_price,0));
+}
+$('service').addEventListener('change',()=>{renderCart();loadMenus().catch(e=>say(e.message,true));});
+$('send').addEventListener('click',async()=>{
+ if(!cart.length){say('Ajoute au moins un plat.',true);return;}
+ const mode=$('service').value;
+ const items=cart.map(x=>({menu_item_id:x.menu_item_id,name:x.name,quantity:x.quantity,unit_price:x.unit_price,service_mode:mode,packaging:x.packaging.filter(p=>p.service_mode==='all'||p.service_mode===mode).map(p=>({name:p.component_name,quantity:Number(p.quantity_per_menu),unit:p.unit}))}));
+ const order_number='FF-'+new Date().toISOString().replace(/[-:TZ.]/g,'').slice(2,14);
+ const payload={shop_id:shopId,order_number,items,notes:$('notes').value.trim()||null,status:'received',payment_status:$('payment').value,created_by:userId};
+ const {error}=await db.from('fast_food_orders').insert(payload);if(error){say('Commande non envoyée : '+error.message,true);return;}
+ say('Commande '+order_number+' envoyée en cuisine.');cart=[];$('notes').value='';renderCart();
+});
+(async function init(){
+ try{
+ db=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
+ const {data:{session},error}=await db.auth.getSession();if(error||!session){location.replace('connexion.html');return;}userId=session.user.id;
+ const {data:members,error:me}=await db.from('shop_members').select('shop_id,role').eq('user_id',userId);if(me)throw me;
+ const valid=(members||[]).filter(m=>['owner','manager','gestionnaire','cashier','caissier'].includes(m.role));if(!valid.length)throw new Error('Accès réservé à la caisse et à la gestion.');
+ const key='gurisha_active_shop_'+userId,saved=localStorage.getItem(key),selected=valid.find(m=>m.shop_id===saved)||valid[0];shopId=selected.shop_id;role=selected.role;
+ const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=(shop?.name||'Ma boutique')+' · le client ne voit pas les consignes internes';
+ await loadMenus();
+ }catch(err){say(err.message||'Impossible de charger la caisse Fast-Food.',true);$('menuList').textContent='Vérifie les migrations Supabase et les autorisations.';}
+})();
+</script></body></html>
