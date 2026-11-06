@@ -279,9 +279,9 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     document.getElementById('constructionMaterialsButton').hidden=!hasConstruction;
     document.querySelector('.cards').hidden=!(hasCommerce||hasPos);
     document.getElementById('search').hidden=!(hasCommerce||hasPos);
-    const staffRoles=window.GURISHA_ROLES||[membership.role];
+    const assignedRoles=window.GURISHA_ROLES||[membership.role];
     const salonActivity=(window.GURISHA_ACTIVITY_TYPES||[]).includes('salon');
-    if(salonActivity&&staffRoles.some(r=>['hairdresser','beautician'].includes(r))&&!staffRoles.some(r=>['manager','cashier'].includes(r))){location.replace('salon-employe.html');return;}
+    if(salonActivity&&assignedRoles.some(r=>['hairdresser','beautician'].includes(r))&&!assignedRoles.some(r=>['manager','cashier'].includes(r))){location.replace('salon-employe.html');return;}
     if(!hasCommerce&&!hasPos){
       if(hasConstruction){location.replace('construction-materials.html');return;}
       if(hasFastFood){const roles=window.GURISHA_ROLES||[membership.role];if(roles.includes('preparer')&&!roles.some(r=>['cashier','manager'].includes(r))){location.replace('preparateur.html');return;}if(roles.includes('cashier')&&!roles.includes('manager')){location.replace('fast-food-caisse.html');return;}location.replace('fast-food-menu.html');return;}
