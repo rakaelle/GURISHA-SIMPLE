@@ -59,7 +59,8 @@ $('menuForm').addEventListener('submit',async e=>{
  e.preventDefault();const f=e.currentTarget,fd=new FormData(f),name=String(fd.get('name')).trim();
  const rows=[...$('components').querySelectorAll('.component')].map(r=>({kind:r.querySelector('.kind').value,id:r.querySelector('.item').value,qty:Number(r.querySelector('.qty').value),mode:r.querySelector('.mode').value}));
  if(rows.some(r=>!r.id||!(r.qty>0))){say('Vérifie chaque ligne : choisis un article de stock et une quantité supérieure à zéro.',true);return;}
- let mediaItems;try{mediaItems=await uploadMenuMedia(f.elements.media.files);}catch(err){say('Média non envoyé : '+err.message,true);return;}\n const payload={shop_id:shopId,name,category:fd.get('category'),description:String(fd.get('description')||'').trim()||null,sale_price:Number(fd.get('sale_price')),media_items:mediaItems,created_by:userId};
+ let mediaItems;try{mediaItems=await uploadMenuMedia(f.elements.media.files);}catch(err){say('Média non envoyé : '+err.message,true);return;}
+ const payload={shop_id:shopId,name,category:fd.get('category'),description:String(fd.get('description')||'').trim()||null,sale_price:Number(fd.get('sale_price')),media_items:mediaItems,created_by:userId};
  const {data:menu,error}=await db.from('fast_food_menu_items').insert(payload).select().single();
  if(error){say('Menu non enregistré : '+error.message,true);return;}
  const components=rows.map(r=>{const i=ingredients.find(x=>x.id===r.id);return{shop_id:shopId,menu_item_id:menu.id,ingredient_id:i.id,component_type:r.kind,component_name:i.name,quantity_per_menu:r.qty,unit:i.base_unit,service_mode:r.mode};});
