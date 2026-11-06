@@ -193,6 +193,22 @@ as $$
   );
 $$;
 
+-- Vérification sécurisée d'appartenance à une équipe (évite une récursion RLS).
+create or replace function public.gurisha_is_salon_team_member(p_team_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = public
+as $
+  select exists (
+    select 1
+      from public.salon_team_members tm
+      join public.staff_profiles sp on sp.id = tm.staff_profile_id
+     where tm.team_id = p_team_id
+       and sp.user_id = auth.uid()
+       and sp.is_active = true
+  );
+$;
+
 -- RLS : données isolées par établissement et droits adaptés au rôle.
 do $$
 declare t text;
@@ -221,11 +237,7 @@ create policy salon_teams_read on public.salon_teams
 for select to authenticated
 using (
   public.gurisha_has_shop_access(shop_id, array['hairdresser','beautician','receptionist'])
-  or exists (
-    select 1 from public.salon_team_members tm
-    join public.staff_profiles sp on sp.id=tm.staff_profile_id
-    where tm.team_id=salon_teams.id and sp.user_id=auth.uid()
-  )
+  or public.gurisha_is_salon_team_member(id)
 );
 drop policy if exists salon_teams_manage on public.salon_teams;
 create policy salon_teams_manage on public.salon_teams
@@ -242,11 +254,7 @@ using (
     select 1 from public.staff_profiles sp
     where sp.id=salon_team_members.staff_profile_id and sp.user_id=auth.uid()
   )
-  or exists (
-    select 1 from public.salon_team_members mine
-    join public.staff_profiles sp on sp.id=mine.staff_profile_id
-    where mine.team_id=salon_team_members.team_id and sp.user_id=auth.uid()
-  )
+  or public.gurisha_is_salon_team_member(team_id)
 );
 drop policy if exists salon_team_members_manage on public.salon_team_members;
 create policy salon_team_members_manage on public.salon_team_members
