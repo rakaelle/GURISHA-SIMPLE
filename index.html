@@ -45,6 +45,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 .pos-page-grid .pos-product{min-width:0;width:100%;max-width:100%;min-height:112px;padding:9px 7px;flex:none;white-space:normal;overflow-wrap:anywhere}
 .pos-page-grid .pos-product strong{font-size:12px;line-height:1.25}
 .pos-page-grid .pos-product small{font-size:10px;line-height:1.4}
+.pos-page-grid .pos-product-image{display:block;width:100%;height:76px;object-fit:contain;background:#fff;border-radius:8px;margin:0 0 7px;padding:3px}
 .pos-page-count{text-align:center;color:#758a7d;font-size:11px;margin-top:9px}
 @media(max-width:760px){
  .pos-layout{grid-template-columns:minmax(0,1fr)}
@@ -564,7 +565,10 @@ function renderCaisse(){
  const grid=document.createElement("div");grid.className="pos-page-grid";
  visible.slice(posPage*4,posPage*4+4).forEach(p=>{
   const b=document.createElement("button");b.type="button";b.className="pos-product";b.disabled=stock(p)<1;
-  b.innerHTML="<strong>"+esc(p.name)+"</strong><small>"+esc(p.format||"")+"<br>"+money(p.sellPrice)+"<br>En stock : "+stock(p)+"</small>";
+  const photo=(p.media_items||[]).find(m=>m.kind==="image"&&m.url);
+  if(photo){const img=document.createElement("img");img.className="pos-product-image";img.src=photo.url;img.alt=p.name;img.loading="lazy";b.appendChild(img);}
+  const name=document.createElement("strong");name.textContent=p.name;b.appendChild(name);
+  const details=document.createElement("small");details.innerHTML=esc(p.format||"")+"<br>"+money(p.sellPrice)+"<br>En stock : "+stock(p);b.appendChild(details);
   b.addEventListener("click",()=>addPosItem(p.id));grid.appendChild(b);
  });
  if(!visible.length){grid.className="pos-empty";grid.textContent="Aucun article trouvé dans cette catégorie.";}
