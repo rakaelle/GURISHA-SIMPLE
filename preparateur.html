@@ -74,9 +74,11 @@ function itemMarkup(item){
   else if(options&&typeof options==='object') details=Object.entries(options).map(([k,v])=>k+': '+v).join(' · ');
   else details=String(options||'');
   if(item.notes) details+=(details?' · ':'')+'Note : '+item.notes;
+  const ingredients=Array.isArray(item.ingredients)?item.ingredients:[];
+  const ingredientHtml=ingredients.length?'<div class="details"><strong>À préparer :</strong><br>'+ingredients.map(p=>'• '+esc(p.name)+' : '+esc(p.quantity)+' '+esc(p.unit==='g'?'g':p.unit==='ml'?'ml':'pièce(s)')).join('<br>')+'</div>':'';
   const packaging=Array.isArray(item.packaging)?item.packaging:[];
-  const packHtml=packaging.length?'<div class="note"><strong>À emballer / vérifier :</strong><br>'+packaging.map(p=>'• '+esc(p.name)+' × '+esc(p.quantity)+' '+esc(p.unit==='g'?'g':p.unit==='ml'?'ml':'pièce(s)')).join('<br>')+'</div>':'';
-  return '<div class="item"><div class="itemline"><span class="itemname">'+esc(name)+'</span><span class="qty">× '+esc(qty)+'</span></div>'+(details?'<div class="details">'+esc(details)+'</div>':'')+packHtml+'</div>';
+  const packHtml=packaging.length?'<div class="note"><strong>À emballer / vérifier :</strong><br>'+packaging.map(p=>'• '+esc(p.name)+' × '+esc(Number(p.quantity||0)*Number(qty||1))+' '+esc(p.unit==='g'?'g':p.unit==='ml'?'ml':'pièce(s)')).join('<br>')+'</div>':'';
+  return '<div class="item"><div class="itemline"><span class="itemname">'+esc(name)+'</span><span class="qty">× '+esc(qty)+'</span></div>'+(details?'<div class="details">'+esc(details)+'</div>':'')+ingredientHtml+packHtml+'</div>';
 }
 function render(orders){
   if(!orders.length){ordersBox.innerHTML='<div class="empty"><strong>Aucune commande en attente</strong>Les nouvelles commandes apparaîtront ici automatiquement.</div>';return;}
@@ -93,7 +95,13 @@ async function loadOrders(){
   if(loading||!client||!shopId)return;loading=true;
   try{
     const {data,error}=await client.from('fast_food_orders').select('id,order_number,items,notes,status,payment_status,created_at').eq('shop_id',shopId).in('status',['received','preparing','ready']).order('created_at',{ascending:true});
-    if(error)throw error;render(data||[]);
+    if(error)throw error;
+    const orders=data||[];
+    const menuIds=[...new Set(orders.flatMap(o=>(Array.isArray(o.items)?o.items:[]).map(i=>i.menu_item_id).filter(Boolean)))];
+    let recipeRows=[];
+    if(menuIds.length){const rr=await client.from('fast_food_menu_components').select('menu_item_id,component_name,quantity_per_menu,unit').eq('shop_id',shopId).eq('component_type','ingredient').in('menu_item_id',menuIds);if(rr.error)throw rr.error;recipeRows=rr.data||[];}
+    orders.forEach(o=>{o.items=(Array.isArray(o.items)?o.items:[]).map(item=>({...item,ingredients:recipeRows.filter(r=>r.menu_item_id===item.menu_item_id).map(r=>({name:r.component_name,quantity:Number(r.quantity_per_menu)*Number(item.quantity||1),unit:r.unit}))}));});
+    render(orders);
   }catch(err){message('Impossible de charger les commandes : '+(err.message||'erreur inconnue'),'err');}
   finally{loading=false;}
 }
