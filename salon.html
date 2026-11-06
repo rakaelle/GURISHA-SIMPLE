@@ -42,7 +42,7 @@
   <div class="field"><label>Date *</label><input name="appointment_date" type="date" required></div>
   <div class="field"><label>Heure *</label><input name="start_time" type="time" required></div>
   <div class="field"><label>Lieu de la prestation</label><select name="location_mode" id="locationMode"><option value="salon">Au salon</option><option value="home">À domicile</option></select></div>
-  <div class="field"><label>Montant du déplacement facturé (FBu)</label><input name="transport_charge_client" id="transportCharge" type="number" min="0" step="1" value="0"></div>
+  <div class="field"><label>Montant aller-retour du taxi facturé à la cliente (FBu)</label><input name="transport_charge_client" id="transportCharge" type="number" min="0" step="1" value="0"></div>
   <div class="field full" id="homeFields"><div class="grid">
    <div class="field"><label>Adresse de la cliente *</label><input name="client_address" placeholder="Adresse complète"></div>
    <div class="field"><label>Adresse de départ du taxi *</label><input name="pickup_address" placeholder="Adresse du salon"></div>
@@ -169,7 +169,7 @@ $('appointmentForm').addEventListener('submit',async e=>{
  const home=fd.get('location_mode')==='home';
  if(home&&(!String(fd.get('client_address')||'').trim()||!String(fd.get('pickup_address')||'').trim())){say('Pour un rendez-vous à domicile, renseignez l’adresse de la cliente et celle du départ du taxi.',true);return;}
  const appointmentNumber='SAL-'+Date.now().toString().slice(-8);
- const payload={shop_id:shopId,appointment_number:appointmentNumber,client_name:String(fd.get('client_name')).trim(),client_phone:fd.get('client_phone')||null,service_id:service.id,service_name:service.name,service_amount:Number(service.price),required_staff_count:Number(service.required_staff_count),appointment_date:fd.get('appointment_date'),start_time:fd.get('start_time'),duration_minutes:service.duration_minutes,location_mode:fd.get('location_mode'),client_address:home?fd.get('client_address'):null,transport_charge_client:home?Number(fd.get('transport_charge_client')||0):0,quote_status:fd.get('quote_status'),appointment_status:'pending',notes:fd.get('notes')||null,team_id:team.id,created_by:userId};
+ const payload={shop_id:shopId,appointment_number:appointmentNumber,client_name:String(fd.get('client_name')).trim(),client_phone:fd.get('client_phone')||null,service_id:service.id,service_name:service.name,service_amount:Number(service.price),required_staff_count:Number(service.required_staff_count),appointment_date:fd.get('appointment_date'),start_time:fd.get('start_time'),duration_minutes:service.duration_minutes,location_mode:fd.get('location_mode'),client_address:home?fd.get('client_address'):null,transport_charge_client:home?Number(fd.get('transport_charge_client')||0):0,quote_status:fd.get('quote_status'),appointment_status:fd.get('quote_status')==='accepted'?'confirmed':'pending',notes:fd.get('notes')||null,team_id:team.id,created_by:userId};
  const {data:a,error}=await db.from('salon_appointments').insert(payload).select().single();if(error){say(error.message,true);return;}
  const assigned=teamMembers.slice(0,service.required_staff_count).map((m,i)=>({shop_id:shopId,appointment_id:a.id,staff_profile_id:m.staff_profile_id,assignment_label:i===0?'Tresseuse 1':'Tresseuse '+(i+1)}));
  const ar=await db.from('salon_appointment_staff').insert(assigned);
@@ -195,7 +195,7 @@ $('expenseForm').addEventListener('submit',async e=>{
   const valid=(members||[]).filter(m=>['owner','manager'].includes(m.role)||roles.includes('manager')||roles.includes('receptionist'));
   canManageStaff=(members||[]).some(m=>['owner','manager'].includes(m.role))||roles.includes('manager');
   canManageFinance=canManageStaff;
-  if(!canManageStaff){['catalogue','equipes','depenses'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');}
+  if(!canManageStaff){['catalogue','equipes','depenses'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');showTab('rendezvous');}
   if(!valid.length)throw new Error('Accès réservé au gestionnaire ou à la réception.');
   const key='gurisha_active_shop_'+userId,saved=localStorage.getItem(key),selected=valid.find(m=>m.shop_id===saved)||valid[0];shopId=selected.shop_id;
   const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=shop?.name||'Mon salon';
