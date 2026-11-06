@@ -74,7 +74,8 @@
  </div><button class="green" type="submit" style="width:100%;margin-top:12px">Enregistrer le mouvement</button></form></div>
  <div class="panel"><h3>Inventaire du salon</h3><div id="productList" class="list muted">Chargement…</div></div>
 </section>
-\n<section id="transport" class="tab-panel hidden">
+
+<section id="transport" class="tab-panel hidden">
  <div class="panel"><h3>Réservations de taxi</h3><p class="muted">Le salon réserve le taxi pour les tresseuses. Le montant facturé à la cliente figure dans le devis ; le montant réellement payé sera enregistré dans les dépenses.</p><div id="taxiList" class="list muted">Chargement…</div></div>
 </section>
 
@@ -149,7 +150,8 @@ async function loadAll(){
   db.from('salon_services').select('*').eq('shop_id',shopId).eq('is_active',true).order('category').order('name'),
   db.from('salon_teams').select('*').eq('shop_id',shopId).eq('is_active',true).order('team_name'),
   db.from('salon_appointments').select('*').eq('shop_id',shopId).order('appointment_date',{ascending:false}).limit(100),
-  canManageFinance?db.from('salon_expenses').select('*').eq('shop_id',shopId).order('paid_at',{ascending:false}).limit(100):Promise.resolve({data:[],error:null}),\n  db.from('salon_products').select('*').eq('shop_id',shopId).eq('is_active',true).order('name')
+  canManageFinance?db.from('salon_expenses').select('*').eq('shop_id',shopId).order('paid_at',{ascending:false}).limit(100):Promise.resolve({data:[],error:null}),
+  db.from('salon_products').select('*').eq('shop_id',shopId).eq('is_active',true).order('name')
  ]);
  for(const r of [sr,tr,ar,xr,pr])if(r.error)throw r.error;
  services=sr.data||[];teams=tr.data||[];appointments=ar.data||[];expenses=xr.data||[];salonProducts=pr.data||[];
@@ -173,7 +175,8 @@ $('movementForm').addEventListener('submit',async e=>{
  if(error){say('Mouvement non enregistré : '+error.message,true);return;}
  e.currentTarget.reset();say('Mouvement de stock enregistré.');await loadAll();
 });
-\n$('serviceForm').addEventListener('submit',async e=>{
+
+$('serviceForm').addEventListener('submit',async e=>{
  e.preventDefault();const f=e.currentTarget,fd=new FormData(f),name=String(fd.get('name')).trim();
  try{
   const media=await uploadMedia(f.elements.media.files,'services');
