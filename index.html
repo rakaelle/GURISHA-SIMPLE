@@ -325,7 +325,7 @@ document.getElementById('nSales').textContent=money(products.reduce((a,p)=>a+Num
 renderCaisse();
 }
 function openProduct(){editingId=null;document.getElementById('productForm').reset();document.getElementById('productTitle').textContent='Ajouter un article';fillCategories();['initial','lotA','lotB','buyPrice','sellPrice'].forEach(id=>document.getElementById(id).value=0);openModal('productModal');}
-function editProduct(id){if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut modifier un article.');return;}const p=products.find(x=>x.id===id);if(!p)return;editingId=id;fillCategories();document.getElementById('productTitle').textContent='Modifier l’article';
+function editProduct(id){if(isCashier()){alert('Seul le administrateur ou le gestionnaire peut modifier un article.');return;}const p=products.find(x=>x.id===id);if(!p)return;editingId=id;fillCategories();document.getElementById('productTitle').textContent='Modifier l’article';
 [['name','name'],['format','format'],['container','container'],['category','category'],['initial','initial'],['lotA','lotA'],['lotB','lotB'],['buyPrice','buyPrice'],['sellPrice','sellPrice']].forEach(pair=>document.getElementById(pair[0]).value=p[pair[1]]==null?'':p[pair[1]]);
 openModal('productModal');}
 document.getElementById('productForm').addEventListener('submit',e=>{
@@ -336,10 +336,10 @@ const data={name:name,format:v('format'),container:v('container'),category:v('ca
 if(editingId!==null){const p=products.find(x=>x.id===editingId);Object.assign(p,data);}else{products.push(Object.assign({id:Date.now(),sold:0,salesTotal:0},data));}
 save();render();closeModal('productModal');
 });
-function deleteProduct(id){if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut supprimer un article.');return;}const p=products.find(x=>x.id===id);if(p&&confirm('Supprimer définitivement '+p.name+' ?')){products=products.filter(x=>x.id!==id);save();render();}}
+function deleteProduct(id){if(isCashier()){alert('Seul le administrateur ou le gestionnaire peut supprimer un article.');return;}const p=products.find(x=>x.id===id);if(p&&confirm('Supprimer définitivement '+p.name+' ?')){products=products.filter(x=>x.id!==id);save();render();}}
 async function deleteAllTestProducts(){
- if(window.GURISHA_ROLE!=='owner'){alert('Cette action est réservée au propriétaire.');return;}
- if(!confirm('Réinitialiser les données de test ? Tous les articles, toutes les ventes et tous les achats de cette boutique seront supprimés définitivement. Les catégories et les comptes employés seront conservés.'))return;
+ if(window.GURISHA_ROLE!=='owner'){alert('Cette action est réservée au administrateur.');return;}
+ if(!confirm('Réinitialiser les données de test ? Tous les articles, toutes les ventes et tous les achats de cette boutique seront supprimés définitivement. Les catégories et les comptes utilisateurs seront conservés.'))return;
  const confirmation=prompt('Pour confirmer cette opération irréversible, écrivez NETTOYER :');
  if(String(confirmation||'').trim().toUpperCase()!=='NETTOYER'){alert('Opération annulée. Pour confirmer, saisissez NETTOYER.');return;}
  const button=document.querySelector('.inventory-tools button');
@@ -357,7 +357,7 @@ async function deleteAllTestProducts(){
  lastRemoteSignature=JSON.stringify(currentPayload());
  localDirty=false;
  fillCategories();render();
- alert('Nettoyage terminé : '+(r.data.deleted_products||0)+' article(s), '+(r.data.deleted_sales||0)+' vente(s) et '+(r.data.deleted_purchases||0)+' achat(s) supprimés. Les catégories et les comptes employés sont conservés.');
+ alert('Nettoyage terminé : '+(r.data.deleted_products||0)+' article(s), '+(r.data.deleted_sales||0)+' vente(s) et '+(r.data.deleted_purchases||0)+' achat(s) supprimés. Les catégories et les comptes utilisateurs sont conservés.');
 }
 let categoryEditingOriginal=null;
 function renderCategoryList(){
@@ -372,7 +372,7 @@ function resetCategoryForm(){
   document.getElementById('categorySubmit').textContent='Ajouter';
 }
 function openCategory(){
-  if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut gérer les catégories.');return;}
+  if(isCashier()){alert('Seul le administrateur ou le gestionnaire peut gérer les catégories.');return;}
   resetCategoryForm();renderCategoryList();openModal('categoryModal');
 }
 function editCategory(name){
@@ -394,7 +394,7 @@ function deleteCategory(name){
 }
 document.getElementById('categoryForm').addEventListener('submit',e=>{
   e.preventDefault();
-  if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut gérer les catégories.');return;}
+  if(isCashier()){alert('Seul le administrateur ou le gestionnaire peut gérer les catégories.');return;}
   const c=document.getElementById('categoryName').value.trim();
   if(!c)return;
   if(categories.some(x=>x.toLowerCase()===c.toLowerCase()&&x!==categoryEditingOriginal)){alert('Cette catégorie existe déjà.');return;}
@@ -522,7 +522,7 @@ async function cancelPosSale(id){
  try{await reloadPosData();}catch(e){alert("Vente annulée. Rechargez la page pour actualiser le stock.");}
  if(["owner","manager","gestionnaire"].includes(window.GURISHA_ROLE)&&document.getElementById("salesHistory").style.display==="block")loadSalesHistory();
 }
-function showHistoryTab(which){if(!["owner","manager","gestionnaire"].includes(window.GURISHA_ROLE)){alert("Historique réservé au propriétaire et au gestionnaire.");return;}document.getElementById("caissePanel").style.display="none";document.getElementById("inventory").style.display="none";document.getElementById("historyPanel").style.display="block";document.getElementById("salesHistory").style.display=which==="sales"?"block":"none";document.getElementById("purchasesHistory").style.display=which==="purchases"?"block":"none";if(which==="sales")loadSalesHistory();else loadPurchasesHistory();}
+function showHistoryTab(which){if(!["owner","manager","gestionnaire"].includes(window.GURISHA_ROLE)){alert("Historique réservé au administrateur et au gestionnaire.");return;}document.getElementById("caissePanel").style.display="none";document.getElementById("inventory").style.display="none";document.getElementById("historyPanel").style.display="block";document.getElementById("salesHistory").style.display=which==="sales"?"block":"none";document.getElementById("purchasesHistory").style.display=which==="purchases"?"block":"none";if(which==="sales")loadSalesHistory();else loadPurchasesHistory();}
 function toggleSalesHistory(){showHistoryTab("sales");}
 async function loadPurchasesHistory(){const root=document.getElementById('purchasesHistory');root.textContent='Chargement...';const r=await window.GURISHA_SUPABASE_CLIENT.rpc('gurisha_list_purchases',{p_shop_id:window.GURISHA_SHOP_ID});if(r.error){root.textContent='Historique des achats indisponible : '+r.error.message;return;}root.innerHTML='<h2>Historique des achats</h2>';if(!r.data||!r.data.length){root.append('Aucun achat enregistré.');return;}const wrap=document.createElement('div');wrap.className='tablewrap';const table=document.createElement('table');table.style.minWidth='650px';table.innerHTML='<thead><tr><th>Date et heure</th><th>Article</th><th>Quantité</th><th>Prix d’achat unitaire</th><th>Montant total</th></tr></thead>';const body=document.createElement('tbody');r.data.forEach(p=>{const tr=document.createElement('tr');[new Date(p.created_at).toLocaleString('fr-FR'),p.product_name,p.quantity,money(p.unit_cost),money(p.total_cost)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});body.appendChild(tr);});table.appendChild(body);wrap.appendChild(table);root.appendChild(wrap);}
 async function loadSalesHistory(){
@@ -566,7 +566,7 @@ window.gurishaInit=async function(){
     localStorage.setItem(KEY,JSON.stringify({categories:categories,products:products}));
   }else{
     if(window.GURISHA_ROLE!=='owner'){
-      throw new Error('La boutique doit être initialisée par le propriétaire avant la connexion des employés.');
+      throw new Error('La boutique doit être initialisée par le administrateur avant la connexion des utilisateurs.');
     }
     categories=defaultCategories.slice();
     products=[];
