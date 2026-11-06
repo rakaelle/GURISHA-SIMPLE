@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GURISHA — Espace préparateur</title>
+<meta name="theme-color" content="#198754">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/gurisha-icon.svg" type="image/svg+xml">
+<style>
+:root{--green:#198754;--dark:#126b42;--soft:#e8f5ed;--bg:#f4f8f5;--line:#dce7df;--ink:#26372d;--muted:#718078;--orange:#fff2df;--orange-ink:#9a5a12;--blue:#e8f2fb;--blue-ink:#285c8d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,sans-serif}
+header{background:var(--green);color:#fff;padding:18px 16px;text-align:center}
+header h1{margin:0;font-size:22px;letter-spacing:2px}
+header p{margin:6px 0 0;font-size:13px;opacity:.95}
+main{max-width:850px;margin:auto;padding:14px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 14px;flex-wrap:wrap}
+.top h2{font-size:19px;color:var(--dark);margin:0}
+button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:pointer}
+.refresh{background:#fff;border:1px solid var(--line);color:var(--dark)}
+.statusbox{display:none;padding:12px;border-radius:9px;margin:0 0 12px;font-size:13px;line-height:1.45}
+.statusbox.show{display:block}.statusbox.err{background:#fdebed;color:#a52b35}.statusbox.ok{background:var(--soft);color:var(--dark)}
+.order{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:12px;box-shadow:0 4px 14px #174d2a0a}
+.orderhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;border-bottom:1px solid #edf1ee;padding-bottom:11px;margin-bottom:11px}
+.order-number{font-size:17px;font-weight:800;color:var(--dark)}
+.order-time{font-size:12px;color:var(--muted);margin-top:4px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{display:inline-block;padding:6px 9px;border-radius:20px;font-size:11px;font-weight:800;background:var(--soft);color:var(--dark)}
+.pill.received{background:var(--blue);color:var(--blue-ink)}
+.pill.preparing{background:var(--orange);color:var(--orange-ink)}
+.pill.ready{background:var(--soft);color:var(--dark)}
+.pill.unpaid{background:#fdebed;color:#a52b35}
+.item{padding:10px 0;border-bottom:1px solid #edf1ee}
+.item:last-child{border-bottom:0}
+.itemline{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.itemname{font-weight:800}.qty{font-weight:800;color:var(--dark);white-space:nowrap}
+.details{font-size:12px;color:#52665a;line-height:1.5;margin-top:5px}
+.note{margin-top:9px;padding:9px 10px;border-radius:8px;background:#f6f9f7;font-size:12px;line-height:1.45}
+.actions{display:flex;gap:8px;margin-top:13px}
+.actions button{flex:1;min-height:43px}
+.start{background:#fff1dc;color:#92530d}.readybtn{background:var(--green);color:#fff}
+.empty{background:#fff;border:1px dashed #bcd5c4;border-radius:14px;padding:28px 18px;text-align:center;color:var(--muted);line-height:1.5}
+.empty strong{display:block;color:var(--dark);font-size:16px;margin-bottom:6px}
+.footer{text-align:center;color:var(--muted);font-size:11px;padding:15px}
+@media(max-width:480px){main{padding:10px}.order{padding:12px}.top h2{font-size:17px}.actions{flex-direction:column}}
+</style>
+</head>
+<body>
+<header><h1>GURISHA</h1><p>Espace préparateur · Cuisine</p></header>
+<main>
+  <div class="top"><h2>Commandes à préparer</h2><button class="refresh" id="refreshBtn" type="button">↻ Actualiser</button></div>
+  <div id="status" class="statusbox" role="status" aria-live="polite"></div>
+  <div id="orders"><div class="empty"><strong>Chargement des commandes…</strong>Un instant, s’il te plaît.</div></div>
+  <div class="footer">Les prix et les informations de caisse ne sont pas affichés dans cet espace.</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+const statusBox=document.getElementById('status');
+const ordersBox=document.getElementById('orders');
+let client,shopId,loading=false;
+function message(text,type){statusBox.textContent=text;statusBox.className='statusbox show '+type;}
+function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function statusLabel(s){return s==='preparing'?'En préparation':s==='ready'?'Prête':s==='cancelled'?'Annulée':'Reçue';}
+function paymentLabel(s){return s==='paid'?'Payée':'À payer';}
+function dateLabel(value){if(!value)return '';const d=new Date(value);return Number.isNaN(d.getTime())?'':d.toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});}
+function itemMarkup(item){
+  const name=item.name||item.article||item.item_name||item.product_name||'Article';
+  const qty=item.quantity??item.qty??1;
+  const options=item.customizations??item.options??item.modifications??[];
+  let details='';
+  if(Array.isArray(options)) details=options.map(x=>typeof x==='string'?x:(x.label||x.name||x.value||'')).filter(Boolean).join(' · ');
+  else if(options&&typeof options==='object') details=Object.entries(options).map(([k,v])=>k+': '+v).join(' · ');
+  else details=String(options||'');
+  if(item.notes) details+=(details?' · ':'')+'Note : '+item.notes;
+  return '<div class="item"><div class="itemline"><span class="itemname">'+esc(name)+'</span><span class="qty">× '+esc(qty)+'</span></div>'+(details?'<div class="details">'+esc(details)+'</div>':'')+'</div>';
+}
+function render(orders){
+  if(!orders.length){ordersBox.innerHTML='<div class="empty"><strong>Aucune commande en attente</strong>Les nouvelles commandes apparaîtront ici automatiquement.</div>';return;}
+  ordersBox.innerHTML=orders.map(o=>{
+    const number=o.order_number||String(o.id).slice(0,8).toUpperCase();
+    const items=Array.isArray(o.items)?o.items:[];
+    const status=o.status||'received';
+    const payment=o.payment_status||'unpaid';
+    const action=status==='received'?'<button class="start" onclick="changeStatus(\''+esc(o.id)+'\',\'preparing\')">Commencer la préparation</button>':status==='preparing'?'<button class="readybtn" onclick="changeStatus(\''+esc(o.id)+'\',\'ready\')">Marquer comme prête</button>':'';
+    return '<article class="order"><div class="orderhead"><div><div class="order-number">Commande '+esc(number)+'</div><div class="order-time">'+esc(dateLabel(o.created_at))+'</div></div><div class="pills"><span class="pill '+esc(status)+'">'+esc(statusLabel(status))+'</span><span class="pill '+(payment==='paid'?'':'unpaid')+'">'+esc(paymentLabel(payment))+'</span></div></div><div>'+items.map(itemMarkup).join('')+'</div>'+(o.notes?'<div class="note">Note générale : '+esc(o.notes)+'</div>':'')+(action?'<div class="actions">'+action+'</div>':'')+'</article>';
+  }).join('');
+}
+async function loadOrders(){
+  if(loading||!client||!shopId)return;loading=true;
+  try{
+    const {data,error}=await client.from('fast_food_orders').select('id,order_number,items,notes,status,payment_status,created_at').eq('shop_id',shopId).in('status',['received','preparing','ready']).order('created_at',{ascending:true});
+    if(error)throw error;render(data||[]);
+  }catch(err){message('Impossible de charger les commandes : '+(err.message||'erreur inconnue'),'err');}
+  finally{loading=false;}
+}
+async function changeStatus(orderId,nextStatus){
+  const label=nextStatus==='preparing'?'commencer cette préparation':'marquer cette commande comme prête';
+  if(!confirm('Confirmer : '+label+' ?'))return;
+  try{
+    const {data,error}=await client.rpc('preparer_update_fast_food_order_status',{p_order_id:orderId,p_status:nextStatus});
+    if(error)throw error;if(data&&data.error)throw new Error(data.error);
+    message(nextStatus==='preparing'?'La préparation a commencé.':'La commande est marquée comme prête.','ok');
+    await loadOrders();
+  }catch(err){message('Mise à jour impossible : '+(err.message||'erreur inconnue'),'err');}
+}
+document.getElementById('refreshBtn').addEventListener('click',loadOrders);
+(async function init(){
+  try{
+    if(!window.supabase||!window.GURISHA_SUPABASE_URL||!window.GURISHA_SUPABASE_KEY)throw new Error('Configuration Supabase introuvable.');
+    client=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
+    const {data:{session},error}=await client.auth.getSession();
+    if(error||!session){location.replace('connexion.html');return;}
+    const {data:members,error:memberError}=await client.from('shop_members').select('shop_id,role').eq('user_id',session.user.id).eq('role','preparer');
+    if(memberError)throw memberError;
+    if(!members||!members.length){throw new Error('Cet espace est réservé aux comptes Préparateur.');}
+    shopId=members[0].shop_id;
+    await loadOrders();
+    setInterval(loadOrders,12000);
+  }catch(err){message(err.message||'Impossible d’ouvrir cet espace.','err');ordersBox.innerHTML='<div class="empty"><strong>Accès indisponible</strong>Vérifie ton compte ou contacte l’administrateur.</div>';}
+})();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+</script>
+</body>
+</html>
