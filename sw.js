@@ -3,6 +3,7 @@ const APP_SHELL = [
   "./",
   "./index.html",
   "./activites.html",
+  "./modules.html",
   "./connexion.html",
   "./inscription.html",
   "./administration.html",
