@@ -42,8 +42,8 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 </div>
 <div class="toolbar">
 <button class="green" onclick="openProduct()">+ Ajouter un article</button>
-<button class="light" onclick="openCategory()">+ Ajouter une catégorie</button>
-<button class="light" onclick="exportCSV()">Exporter CSV</button>
+<button class="light" id="addCategoryButton" onclick="openCategory()">+ Ajouter une catégorie</button>
+<button class="light" id="exportButton" onclick="exportCSV()">Exporter CSV</button>
 </div>
 <input id="search" placeholder="Rechercher un article..." oninput="render()">
 <div id="inventory"></div>
@@ -60,8 +60,8 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <div class="field"><label>Type de contenant</label><input id="container" placeholder="Ex. Bouteille"></div>
 </div>
 <div class="field"><label>Catégorie</label><select id="category" required></select></div>
-<div class="field"><label>Quantité initiale</label><input id="initial" type="number" min="0" step="1" value="0" required></div>
-<div class="two">
+<div class="field" id="initialField"><label>Quantité initiale</label><input id="initial" type="number" min="0" step="1" value="0" required></div>
+<div class="two" id="initialLotsFields">
 <div class="field"><label>Lot A — stock actif</label><input id="lotA" type="number" min="0" step="1" value="0" required></div>
 <div class="field"><label>Lot B — réserve</label><input id="lotB" type="number" min="0" step="1" value="0" required></div>
 </div>
@@ -108,8 +108,17 @@ const authClient = window.supabase.createClient(window.GURISHA_SUPABASE_URL, win
       if(logoutError){alert('Déconnexion impossible : '+logoutError.message);return;}
       window.location.replace('connexion.html');
     });
-    const {data:membership}=await authClient.from('shop_members').select('role').eq('user_id',session.user.id).maybeSingle();
-    if(membership && membership.role==='owner') document.getElementById('adminLink').hidden=false;
+    const {data:membership,error:membershipError}=await authClient.from('shop_members').select('role').eq('user_id',session.user.id).maybeSingle();
+    if(membershipError || !membership) throw new Error('Profil de boutique introuvable.');
+    window.GURISHA_ROLE=membership.role;
+    if(membership.role==='owner') document.getElementById('adminLink').hidden=false;
+    if(membership.role==='cashier'){
+      document.getElementById('addCategoryButton').hidden=true;
+      document.getElementById('exportButton').hidden=true;
+      document.getElementById('initialField').hidden=true;
+      document.getElementById('initialLotsFields').hidden=true;
+    }
+    if(typeof window.gurishaInit==='function') window.gurishaInit();
     document.body.style.visibility='visible';
   } catch(err) {
     console.error(err);
@@ -128,6 +137,7 @@ const defaultProducts=[
 {id:5,name:'Savon',format:'Unité',container:'Pièce',category:'HYGIÈNE',initial:15,lotA:15,lotB:0,sold:0,buyPrice:2000,sellPrice:3000,salesTotal:0}
 ];
 let categories=defaultCategories.slice(),products=defaultProducts.slice(),editingId=null,saleId=null,lotId=null;
+function isCashier(){return window.GURISHA_ROLE==='cashier';}
 function save(){localStorage.setItem(KEY,JSON.stringify({categories:categories,products:products}));}
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x){if(Array.isArray(x.categories))categories=x.categories;if(Array.isArray(x.products))products=x.products;}}catch(e){console.error(e);}
 products.forEach(p=>{if(p.buyPrice===undefined)p.buyPrice=0;if(p.salesTotal===undefined)p.salesTotal=0;if(p.sold===undefined)p.sold=0;if(p.lotA===undefined)p.lotA=0;if(p.lotB===undefined)p.lotB=0;});}
@@ -148,7 +158,7 @@ let rows=list.map(p=>'<tr><td><b>'+esc(p.name)+'</b><span class="sub">'+esc(p.fo
 '<td>'+Number(p.initial||0)+'</td><td class="'+(p.lotA?'stock':'zero')+'">'+Number(p.lotA||0)+'</td><td>'+Number(p.lotB||0)+'</td>'+
 '<td class="'+(stock(p)?'stock':'zero')+'">'+stock(p)+'</td><td>'+Number(p.sold||0)+'</td>'+
 '<td>'+money(p.buyPrice)+'</td><td>'+money(p.sellPrice)+'</td><td><b>'+money(p.salesTotal)+'</b></td>'+
-'<td><div class="actions"><button class="green" onclick="openSale('+p.id+')">Vendre</button><button class="light" onclick="openLot('+p.id+')">+ Lot B</button><button class="gray" onclick="editProduct('+p.id+')">Modifier</button><button class="red" onclick="deleteProduct('+p.id+')">Supprimer</button></div></td></tr>').join('');
+'<td><div class="actions"><button class="green" onclick="openSale('+p.id+')">Vendre</button><button class="light" onclick="openLot('+p.id+')">+ Lot B</button>'+(isCashier()?'':'<button class="gray" onclick="editProduct('+p.id+')">Modifier</button><button class="red" onclick="deleteProduct('+p.id+')">Supprimer</button>')+'</div></td></tr>').join('');
 section.innerHTML='<div class="grouphead"><h2>'+esc(cat)+'</h2><span class="muted">'+list.length+' article(s) · Stock : '+qty+' · Ventes : '+money(sum)+'</span></div>'+
 '<div class="tablewrap"><table><thead><tr><th>ARTICLES</th><th>QUANTITÉ INITIALE</th><th>LOT A</th><th>LOT B</th><th>STOCK TOTAL</th><th>QUANTITÉ VENDUE</th><th>PRIX D’ACHAT UNITAIRE</th><th>PRIX DE VENTE UNITAIRE</th><th>TOTAL VENTES</th><th>ACTIONS</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 root.appendChild(section);
@@ -160,20 +170,20 @@ document.getElementById('nSold').textContent=products.reduce((a,p)=>a+Number(p.s
 document.getElementById('nSales').textContent=money(products.reduce((a,p)=>a+Number(p.salesTotal||0),0));
 }
 function openProduct(){editingId=null;document.getElementById('productForm').reset();document.getElementById('productTitle').textContent='Ajouter un article';fillCategories();['initial','lotA','lotB','buyPrice','sellPrice'].forEach(id=>document.getElementById(id).value=0);openModal('productModal');}
-function editProduct(id){const p=products.find(x=>x.id===id);if(!p)return;editingId=id;fillCategories();document.getElementById('productTitle').textContent='Modifier l’article';
+function editProduct(id){if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut modifier un article.');return;}const p=products.find(x=>x.id===id);if(!p)return;editingId=id;fillCategories();document.getElementById('productTitle').textContent='Modifier l’article';
 [['name','name'],['format','format'],['container','container'],['category','category'],['initial','initial'],['lotA','lotA'],['lotB','lotB'],['buyPrice','buyPrice'],['sellPrice','sellPrice']].forEach(pair=>document.getElementById(pair[0]).value=p[pair[1]]==null?'':p[pair[1]]);
 openModal('productModal');}
 document.getElementById('productForm').addEventListener('submit',e=>{
-e.preventDefault();const v=id=>document.getElementById(id).value.trim(),n=id=>Number(document.getElementById(id).value);
-const name=v('name'),initial=n('initial'),a=n('lotA'),b=n('lotB'),buy=n('buyPrice'),sell=n('sellPrice');
+e.preventDefault();if(isCashier()&&editingId!==null){alert('Vous ne pouvez pas modifier un article existant.');return;}const v=id=>document.getElementById(id).value.trim(),n=id=>Number(document.getElementById(id).value);
+const name=v('name'),initial=isCashier()?0:n('initial'),a=isCashier()?0:n('lotA'),b=isCashier()?0:n('lotB'),buy=n('buyPrice'),sell=n('sellPrice');
 if(!name||![initial,a,b].every(x=>Number.isInteger(x)&&x>=0)||a+b>initial||![buy,sell].every(x=>Number.isFinite(x)&&x>=0)){alert('Vérifiez le nom, les quantités et les prix. Les lots A et B ne peuvent pas dépasser la quantité initiale.');return;}
 const data={name:name,format:v('format'),container:v('container'),category:v('category'),initial:initial,lotA:a,lotB:b,buyPrice:buy,sellPrice:sell};
 if(editingId!==null){const p=products.find(x=>x.id===editingId);Object.assign(p,data);}else{products.push(Object.assign({id:Date.now(),sold:0,salesTotal:0},data));}
 save();render();closeModal('productModal');
 });
-function deleteProduct(id){const p=products.find(x=>x.id===id);if(p&&confirm('Supprimer définitivement '+p.name+' ?')){products=products.filter(x=>x.id!==id);save();render();}}
+function deleteProduct(id){if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut supprimer un article.');return;}const p=products.find(x=>x.id===id);if(p&&confirm('Supprimer définitivement '+p.name+' ?')){products=products.filter(x=>x.id!==id);save();render();}}
 function openCategory(){document.getElementById('categoryForm').reset();openModal('categoryModal');}
-document.getElementById('categoryForm').addEventListener('submit',e=>{e.preventDefault();const c=document.getElementById('categoryName').value.trim();if(!c)return;if(categories.some(x=>x.toLowerCase()===c.toLowerCase())){alert('Cette catégorie existe déjà.');return;}categories.push(c);save();fillCategories();render();closeModal('categoryModal');});
+document.getElementById('categoryForm').addEventListener('submit',e=>{e.preventDefault();if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut ajouter une catégorie.');return;}const c=document.getElementById('categoryName').value.trim();if(!c)return;if(categories.some(x=>x.toLowerCase()===c.toLowerCase())){alert('Cette catégorie existe déjà.');return;}categories.push(c);save();fillCategories();render();closeModal('categoryModal');});
 function openSale(id){const p=products.find(x=>x.id===id);if(!p)return;saleId=id;document.getElementById('saleInfo').textContent=p.name+' — stock disponible : '+stock(p);document.getElementById('saleQty').value='';document.getElementById('saleQty').max=stock(p);document.getElementById('salePrice').value=p.sellPrice;calcSale();openModal('saleModal');}
 function calcSale(){document.getElementById('saleTotal').value=money(Number(document.getElementById('saleQty').value)*Number(document.getElementById('salePrice').value));}
 document.getElementById('saleQty').addEventListener('input',calcSale);document.getElementById('salePrice').addEventListener('input',calcSale);
@@ -182,7 +192,7 @@ let remaining=q,fromA=Math.min(Number(p.lotA||0),remaining);p.lotA-=fromA;remain
 function openLot(id){const p=products.find(x=>x.id===id);if(!p)return;lotId=id;document.getElementById('lotInfo').textContent=p.name+' — Lot A : '+p.lotA+' | Lot B : '+p.lotB;document.getElementById('lotQty').value='';openModal('lotModal');}
 document.getElementById('lotForm').addEventListener('submit',e=>{e.preventDefault();const p=products.find(x=>x.id===lotId),q=Number(document.getElementById('lotQty').value);if(!p)return;if(!Number.isInteger(q)||q<1){alert('Saisissez une quantité positive.');return;}p.lotB=Number(p.lotB||0)+q;save();render();closeModal('lotModal');});
 function exportCSV(){const data=[['Catégorie','Article','Format','Contenant','Quantité initiale','Lot A','Lot B','Stock total','Quantité vendue','Prix achat unitaire','Prix vente unitaire','Total ventes']];products.forEach(p=>data.push([p.category,p.name,p.format||'',p.container||'',p.initial||0,p.lotA||0,p.lotB||0,stock(p),p.sold||0,p.buyPrice||0,p.sellPrice||0,p.salesTotal||0]));const csv='\uFEFF'+data.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='GURISHA_STOCK.csv';a.click();URL.revokeObjectURL(url);}
-load();fillCategories();render();
+window.gurishaInit=function(){load();fillCategories();render();};
 </script>
 </body>
 </html>
