@@ -21,6 +21,7 @@ button{border:0;border-radius:7px;padding:10px 13px;cursor:pointer;font-weight:b
 #search{width:100%;padding:12px;border:1px solid var(--bd);border-radius:8px;margin-bottom:15px;font-size:14px}
 .group{background:#fff;border:1px solid var(--bd);border-radius:10px;margin-bottom:18px;overflow:hidden}.grouphead{background:var(--gl);padding:13px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.grouphead h2{font-size:15px;margin:0;color:var(--gd)}.muted{font-size:12px;color:#607268}
 .tablewrap{overflow-x:auto}table{width:100%;min-width:1150px;border-collapse:collapse;font-size:12px}th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #edf1ee;white-space:nowrap}th{background:#f8faf8;color:#53645a}td .sub{display:block;font-size:11px;color:#7a887f;margin-top:4px}.actions{display:flex;gap:5px}.actions button{padding:7px 8px;font-size:11px}.stock{font-weight:bold;color:var(--gd)}.zero{color:var(--red);font-weight:bold}.empty{text-align:center;padding:25px;color:#718078}
+.inventory-tools{display:flex;justify-content:flex-end;gap:8px;margin:0 0 14px}.inventory-tools button{border:1px solid #f0d1ce;background:#fff5f4;color:#a64038;border-radius:10px;padding:10px 14px;font-size:12px}.inventory-tools button:hover{background:#ffe9e6}@media(max-width:600px){.inventory-tools{justify-content:stretch}.inventory-tools button{width:100%}}
 .modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:center;justify-content:center;padding:12px}.modal.show{display:flex}.panel{background:#fff;border-radius:12px;padding:20px;width:100%;max-width:490px;max-height:92vh;overflow:auto}.panel h2{margin:0 0 16px;color:var(--gd);font-size:20px}
 .field{margin-bottom:12px}.field label{display:block;font-weight:bold;font-size:13px;margin-bottom:5px}.field input,.field select{width:100%;padding:11px;border:1px solid var(--bd);border-radius:7px;font-size:14px}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.buttons{display:flex;gap:8px;margin-top:16px}.buttons button{flex:1}.hint{background:var(--gl);padding:10px;border-radius:7px;font-size:12px;color:var(--gd)}
 footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
@@ -255,6 +256,7 @@ function closeModal(id){document.getElementById(id).classList.remove('show');}
 function fillCategories(){document.getElementById('category').innerHTML=categories.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');}
 function render(){
 const q=document.getElementById('search').value.toLowerCase().trim(),root=document.getElementById('inventory');root.innerHTML='';
+if(window.GURISHA_ROLE==='owner'&&products.length){const tools=document.createElement('div');tools.className='inventory-tools';tools.innerHTML='<button type="button" onclick="deleteAllTestProducts()">Supprimer tous les articles de test</button>';root.appendChild(tools);}
 const visible=products.filter(p=>([p.name,p.format,p.container,p.category].join(' ').toLowerCase()).includes(q));
 categories.forEach(cat=>{
 const list=visible.filter(p=>p.category===cat);if(!list.length)return;
@@ -289,6 +291,15 @@ if(editingId!==null){const p=products.find(x=>x.id===editingId);Object.assign(p,
 save();render();closeModal('productModal');
 });
 function deleteProduct(id){if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut supprimer un article.');return;}const p=products.find(x=>x.id===id);if(p&&confirm('Supprimer définitivement '+p.name+' ?')){products=products.filter(x=>x.id!==id);save();render();}}
+async function deleteAllTestProducts(){
+ if(window.GURISHA_ROLE!=='owner'){alert('Cette action est réservée au propriétaire.');return;}
+ const count=products.length;if(!count){alert('Aucun article à supprimer.');return;}
+ if(!confirm('Attention : '+count+' article(s) seront supprimés du stock. Les catégories et les historiques de ventes et d’achats seront conservés. Continuer ?'))return;
+ const confirmation=prompt('Pour confirmer la suppression définitive, écrivez SUPPRIMER :');
+ if(confirmation!=='SUPPRIMER'){alert('Suppression annulée.');return;}
+ products=[];posCart={};save();render();
+ alert('Les '+count+' article(s) ont été retirés du catalogue. La synchronisation avec la boutique est en cours.');
+}
 let categoryEditingOriginal=null;
 function renderCategoryList(){
   const root=document.getElementById('categoryList');
