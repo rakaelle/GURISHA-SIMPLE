@@ -101,7 +101,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <div class="card"><small>Total des ventes</small><strong id="nSales">0 FBu</strong></div>
 </div>
 <div class="toolbar" aria-label="Navigation principale">
-<button class="light" type="button" id="modulesHomeButton" onclick="location.href='modules.html'">MES MODULES</button><button class="light" type="button" id="stockMainButton" onclick="switchStock()">STOCK</button><button class="green" type="button" id="posMainButton" onclick="switchCaisse()">CAISSE</button><button class="light" type="button" id="fastFoodStockButton" onclick="location.href='fast-food-stock.html'">STOCK FAST-FOOD</button><button class="light" type="button" id="fastFoodMenuButton" onclick="location.href='fast-food-menu.html'">MENUS FAST-FOOD</button><button class="light" id="salesTabButton" onclick="showHistoryTab('sales')">VENTES</button><button class="light" id="purchasesTabButton" onclick="showHistoryTab('purchases')">ACHATS</button><button class="green" id="addProductButton" onclick="openProduct()">+ Ajouter un article</button>
+<button class="light" type="button" id="shopSettingsButton" onclick="location.href='modules.html'">PARAMÈTRES</button><button class="light" type="button" id="stockMainButton" onclick="switchStock()">STOCK</button><button class="green" type="button" id="posMainButton" onclick="switchCaisse()">CAISSE</button><button class="light" type="button" id="fastFoodStockButton" onclick="location.href='fast-food-stock.html'">STOCK FAST-FOOD</button><button class="light" type="button" id="fastFoodMenuButton" onclick="location.href='fast-food-menu.html'">MENUS FAST-FOOD</button><button class="light" id="salesTabButton" onclick="showHistoryTab('sales')">VENTES</button><button class="light" id="purchasesTabButton" onclick="showHistoryTab('purchases')">ACHATS</button><button class="green" id="addProductButton" onclick="openProduct()">+ Ajouter un article</button>
 <button class="light" id="addCategoryButton" onclick="openCategory()">+ Ajouter une catégorie</button>
 <button class="light" id="exportButton" onclick="exportCSV()">Exporter CSV</button>
 </div>
@@ -264,7 +264,7 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     const enabledModules=Array.isArray(shopConfig?.enabled_modules)?shopConfig.enabled_modules:[];
     window.GURISHA_MODULES=enabledModules;
     window.GURISHA_ACTIVITY_TYPES=Array.isArray(shopConfig?.activity_types)?shopConfig.activity_types:[];
-    const hasCommerce=enabledModules.includes('commerce'), hasPos=enabledModules.includes('pos'), hasFastFood=enabledModules.includes('fast_food');
+    const hasCommerce=enabledModules.includes('commerce'), hasPos=enabledModules.includes('pos'), hasFastFood=enabledModules.includes('fast_food'), hasConstruction=enabledModules.includes('construction_materials_delivery');
     document.getElementById('stockMainButton').hidden=!hasCommerce;
     document.getElementById('posMainButton').hidden=!hasPos;
     document.getElementById('addProductButton').hidden=!hasCommerce;
@@ -273,9 +273,14 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     document.getElementById('fastFoodStockButton').hidden=!hasFastFood;
     document.getElementById('fastFoodMenuButton').hidden=!hasFastFood;
     document.getElementById('fastFoodCaisseButton').hidden=!hasFastFood;
+    document.getElementById('constructionMaterialsButton').hidden=!hasConstruction;
     document.querySelector('.cards').hidden=!(hasCommerce||hasPos);
     document.getElementById('search').hidden=!(hasCommerce||hasPos);
-    if(!hasCommerce&&!hasPos){location.replace('modules.html');return;}
+    if(!hasCommerce&&!hasPos){
+      if(hasConstruction){location.replace('construction-materials.html');return;}
+      if(hasFastFood){location.replace(membership.role==='cashier'?'fast-food-caisse.html':membership.role==='preparer'?'preparateur.html':'fast-food-menu.html');return;}
+      location.replace('modules.html');return;
+    }
     const canViewHistory=['owner','manager','gestionnaire'].includes(membership.role);
     if(!hasPos){document.getElementById('salesTabButton').hidden=true;document.getElementById('purchasesTabButton').hidden=true;}
     if(!canViewHistory){ document.getElementById('salesTabButton').hidden=true; document.getElementById('purchasesTabButton').hidden=true; }
