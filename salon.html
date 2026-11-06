@@ -286,12 +286,23 @@ $('expenseForm').addEventListener('submit',async e=>{
   if(!window.supabase||!window.GURISHA_SUPABASE_URL||!window.GURISHA_SUPABASE_KEY)throw new Error('Configuration Supabase introuvable.');
   db=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
   const {data:{session},error}=await db.auth.getSession();if(error||!session){location.replace('connexion.html');return;}userId=session.user.id;
-  $('profileIdentity').textContent=session.user.user_metadata?.display_name||session.user.user_metadata?.name||session.user.email||'Compte connecté';
+  $('profileIdentity').textContent=session.user.user_metadata?.display_name||session.user.user_metadata?.name||session.user.email||'Utilisateur GURISHA';
   const {data:members,error:me}=await db.from('shop_members').select('shop_id,role').eq('user_id',userId);if(me)throw me;
   const roles=Array.isArray(session.user.user_metadata?.gurisha_roles)?session.user.user_metadata.gurisha_roles:[];
   const valid=(members||[]).filter(m=>['admin','owner','manager'].includes(m.role)||roles.includes('admin')||roles.includes('owner')||roles.includes('manager')||roles.includes('receptionist'));
   if(!valid.length)throw new Error('Accès réservé à l’administrateur, au propriétaire, au gestionnaire ou à la réception.');
   const key='gurisha_active_shop_'+userId,saved=localStorage.getItem(key),selected=valid.find(m=>m.shop_id===saved)||valid[0];shopId=selected.shop_id;
+  // Afficher le nom enregistré pour cet utilisateur dans l'équipe du salon.
+  try{
+   const {data:accountProfile,error:accountProfileError}=await db.from('staff_profiles').select('display_name,role,roles').eq('shop_id',shopId).eq('user_id',userId).maybeSingle();
+   if(!accountProfileError&&accountProfile?.display_name){
+    const roleLabels={manager:'Gestionnaire',cashier:'Caissier',seller:'Vendeur',stock_manager:'Gestionnaire de stock',preparer:'Préparateur',order_preparer:'Préparateur de commandes',delivery_person:'Livreur',hairdresser:'Coiffeur / coiffeuse',beautician:'Esthéticien(ne)',receptionist:'Réceptionniste',driver:'Chauffeur',team_leader:'Chef d’équipe'};
+    const rolesList=Array.isArray(accountProfile.roles)&&accountProfile.roles.length?accountProfile.roles:[accountProfile.role];
+    const roleText=[...new Set(rolesList.filter(Boolean).map(role=>roleLabels[role]||role))].join(' · ');
+    $('profileIdentity').textContent=accountProfile.display_name+(roleText?' — '+roleText:'');
+   }else if(accountProfileError){console.warn('Profil du compte indisponible:',accountProfileError.message);}
+  }catch(profileError){console.warn('Profil du compte indisponible:',profileError);}
+
   // Afficher immédiatement un libellé de secours : l'accueil ne reste jamais sur « Chargement… ».
   $('shopLabel').textContent='Mon salon';
   canManageStaff=['admin','owner','manager'].includes(selected.role)||roles.includes('admin')||roles.includes('owner')||roles.includes('manager');canManageFinance=canManageStaff;
