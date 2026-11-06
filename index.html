@@ -219,7 +219,7 @@ let rows=list.map(p=>'<tr><td><b>'+esc(p.name)+'</b><span class="sub">'+esc(p.fo
 '<td>'+Number(p.initial||0)+'</td><td class="'+(p.lotA?'stock':'zero')+'">'+Number(p.lotA||0)+'</td><td>'+Number(p.lotB||0)+'</td>'+
 '<td class="'+(stock(p)?'stock':'zero')+'">'+stock(p)+'</td><td>'+Number(p.sold||0)+'</td>'+
 '<td>'+money(p.buyPrice)+'</td><td>'+money(p.sellPrice)+'</td><td><b>'+money(p.salesTotal)+'</b></td>'+
-'<td><div class="actions"><button class="green" onclick="openSale('+p.id+')">Vendre</button><button class="light" onclick="openLot('+p.id+')">+ Lot B</button>'+(isCashier()?'':'<button class="gray" onclick="editProduct('+p.id+')">Modifier</button><button class="red" onclick="deleteProduct('+p.id+')">Supprimer</button>')+'</div></td></tr>').join('');
+'<td><div class="actions">'+(isCashier()?'':'<button class="green" onclick="openSale('+p.id+')">Vendre</button>')+'<button class="light" onclick="openLot('+p.id+')">+ Lot B</button>'+(isCashier()?'':'<button class="gray" onclick="editProduct('+p.id+')">Modifier</button><button class="red" onclick="deleteProduct('+p.id+')">Supprimer</button>')+'</div></td></tr>').join('');
 section.innerHTML='<div class="grouphead"><h2>'+esc(cat)+'</h2><span class="muted">'+list.length+' article(s) · Stock : '+qty+' · Ventes : '+money(sum)+'</span></div>'+
 '<div class="tablewrap"><table><thead><tr><th>ARTICLES</th><th>QUANTITÉ INITIALE</th><th>LOT A</th><th>LOT B</th><th>STOCK TOTAL</th><th>QUANTITÉ VENDUE</th><th>PRIX D’ACHAT UNITAIRE</th><th>PRIX DE VENTE UNITAIRE</th><th>TOTAL VENTES</th><th>ACTIONS</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 root.appendChild(section);
@@ -365,6 +365,7 @@ async function cancelPosSale(id){
  if(r.error){alert("Annulation impossible : "+r.error.message);return;}
  document.getElementById("posSuccess").style.display="none";
  try{await reloadPosData();}catch(e){alert("Vente annulée. Rechargez la page pour actualiser le stock.");}
+ if(window.GURISHA_ROLE==="owner"&&document.getElementById("salesHistory").style.display==="block")loadSalesHistory();
 }
 function toggleSalesHistory(){
  if(window.GURISHA_ROLE!=="owner")return;
