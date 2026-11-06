@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#198754"><title>GURISHA — Matériaux de construction</title>
+<style>
+:root{--g:#198754;--gd:#126b42;--gl:#e8f5ed;--bg:#f4f8f5;--bd:#dce7df;--tx:#26372d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Arial,sans-serif}header{background:var(--g);color:#fff;padding:16px;text-align:center}header h1{margin:0;letter-spacing:2px}main{max-width:1050px;margin:auto;padding:13px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:5px 0 14px}.panel{background:#fff;border:1px solid var(--bd);border-radius:13px;padding:14px;margin-bottom:13px}.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 10px}.tabs button{white-space:nowrap}.tab{background:#e8f5ed;color:#126b42}.tab.active,.green{background:var(--g);color:#fff}.light{background:var(--gl);color:var(--gd)}button{border:0;border-radius:9px;padding:11px 13px;font-weight:700;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:12px;font-weight:700;color:#52665a}.field input,.field select,.field textarea{width:100%;border:1px solid var(--bd);border-radius:8px;padding:11px;font:inherit;background:#fff;min-width:0}.field textarea{min-height:70px;resize:vertical}.full{grid-column:1/-1}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.notice{background:var(--gl);color:var(--gd);padding:10px;border-radius:9px;font-size:12px;line-height:1.5;margin:9px 0}.error{background:#fdebed;color:#a52b35}.muted{font-size:12px;color:#718078;line-height:1.5}.list{display:grid;gap:8px;margin-top:12px}.item{border:1px solid var(--bd);border-radius:10px;padding:11px;background:#fff}.item strong{color:var(--gd)}.item small{display:block;color:#718078;margin-top:4px;line-height:1.5}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.line{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:7px;align-items:end;margin:8px 0}.line .field{min-width:0}.pill{display:inline-block;background:#edf5ef;color:#276443;border-radius:20px;padding:4px 8px;font-size:11px;font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions button{flex:1;min-width:130px}.price{text-align:right;font-weight:700;color:var(--gd)}@media(max-width:600px){main{padding:9px}.grid,.formgrid{grid-template-columns:1fr}.line{grid-template-columns:1fr 1fr}.line .material{grid-column:1/-1}.line .remove{grid-column:2}.panel{padding:11px}}
+</style></head><body><header><h1>GURISHA</h1><p>Matériaux de construction & livraison</p></header><main>
+<div class="top"><div><h2 style="margin:0;color:var(--gd)">Gestion des matériaux</h2><small id="shopLabel" class="muted">Chargement…</small></div><button class="light" onclick="location.href='modules.html'">← Mes modules</button></div>
+<div id="notice" class="notice hidden"></div>
+<div class="tabs">
+<button class="tab active" data-tab="catalog">Catalogue</button><button class="tab" data-tab="orders">Commandes</button><button class="tab" data-tab="quotes">Devis</button><button class="tab" data-tab="fleet">Camions & livraisons</button>
+</div>
+<section id="catalog" class="panel">
+<h3 style="margin-top:0">Ajouter un matériau</h3>
+<form id="materialForm" class="formgrid">
+<div class="field"><label>Nom du matériau *</label><input name="name" required placeholder="Ex. Sable lavé"></div>
+<div class="field"><label>Catégorie</label><select name="category"><option>Sable</option><option>Gravier et cailloux</option><option>Briques et blocs</option><option>Ciment</option><option>Pierres</option><option>Autres</option></select></div>
+<div class="field"><label>Unité de vente *</label><select name="unit"><option>Camion</option><option>Benne</option><option>m³</option><option>Tonne</option><option>Sac</option><option>Pièce</option><option>Lot</option></select></div>
+<div class="field"><label>Prix unitaire (FBu) *</label><input name="unit_price" type="number" min="0" step="1" required value="0"></div>
+<div class="field"><label>Quantité disponible (facultatif)</label><input name="available_quantity" type="number" min="0" step="0.001" value="0"></div>
+<div class="field"><label>Suivre le stock ?</label><select name="manage_stock"><option value="false">Non — disponibilité à confirmer</option><option value="true">Oui — stock renseigné</option></select></div>
+<div class="field full"><label>Description</label><textarea name="description" placeholder="Qualité, dimensions, provenance…"></textarea></div>
+<div class="full actions"><button class="green">Enregistrer le matériau</button></div>
+</form><div class="notice">Pour le sable et le gravier vendus par camion, tu peux choisir « Camion » ou « Benne ». Le stock peut rester non suivi si le fournisseur s'approvisionne à la demande.</div>
+<div id="materialList" class="list"><div class="muted">Chargement du catalogue…</div></div>
+</section>
+<section id="orders" class="panel hidden">
+<h3 style="margin-top:0">Enregistrer une commande</h3>
+<form id="orderForm">
+<div class="formgrid">
+<div class="field"><label>Nom du client *</label><input name="client_name" required></div><div class="field"><label>Téléphone</label><input name="client_phone" inputmode="tel"></div>
+<div class="field full"><label>Adresse du chantier *</label><input name="delivery_address" required placeholder="Quartier, avenue, repère…"></div>
+<div class="field"><label>Commune / zone</label><input name="delivery_area"></div><div class="field"><label>Date souhaitée</label><input name="requested_date" type="date"></div>
+</div>
+<h4>Matériaux commandés</h4><div id="orderLines"></div><button type="button" class="light" id="addOrderLine">+ Ajouter un matériau</button>
+<div class="formgrid" style="margin-top:12px"><div class="field"><label>Frais de livraison (FBu)</label><input name="delivery_fee" type="number" min="0" value="0"></div><div class="field"><label>Paiement</label><select name="payment_status"><option value="unpaid">Non payé</option><option value="partial">Acompte reçu</option><option value="paid">Payé</option></select></div><div class="field full"><label>Notes</label><textarea name="notes" placeholder="Consignes pour le chauffeur, accès au chantier…"></textarea></div></div>
+<div class="price" id="orderTotal">Total : 0 FBu</div><div class="actions"><button class="green">Enregistrer la commande</button></div>
+</form><div id="orderList" class="list"></div>
+</section>
+<section id="quotes" class="panel hidden">
+<h3 style="margin-top:0">Préparer un devis</h3>
+<form id="quoteForm">
+<div class="formgrid"><div class="field"><label>Nom du client *</label><input name="client_name" required></div><div class="field"><label>Téléphone</label><input name="client_phone" inputmode="tel"></div><div class="field full"><label>Adresse de livraison / chantier</label><input name="delivery_address"></div><div class="field"><label>Zone</label><input name="delivery_area"></div><div class="field"><label>Date souhaitée</label><input name="requested_date" type="date"></div></div>
+<h4>Matériaux du devis</h4><div id="quoteLines"></div><button type="button" class="light" id="addQuoteLine">+ Ajouter un matériau</button>
+<div class="formgrid" style="margin-top:12px"><div class="field"><label>Transport (FBu)</label><input name="delivery_fee" type="number" min="0" value="0"></div><div class="field full"><label>Conditions / détails</label><textarea name="notes" placeholder="Validité du devis, modalités, accès chantier…"></textarea></div></div>
+<div class="price" id="quoteTotal">Total estimé : 0 FBu</div><div class="actions"><button class="green">Enregistrer le devis</button></div>
+</form><div id="quoteList" class="list"></div>
+</section>
+<section id="fleet" class="panel hidden">
+<h3 style="margin-top:0">Ajouter un véhicule</h3>
+<form id="vehicleForm" class="formgrid"><div class="field"><label>Type / nom du véhicule *</label><input name="vehicle_name" required placeholder="Ex. Camion benne 10 roues"></div><div class="field"><label>Immatriculation</label><input name="plate_number"></div><div class="field"><label>Capacité</label><input name="capacity" type="number" min="0" step="0.1"></div><div class="field"><label>Unité de capacité</label><select name="capacity_unit"><option>tonne</option><option>m³</option><option>benne</option><option>camion</option></select></div><div class="field"><label>Chauffeur</label><input name="driver_name"></div><div class="field"><label>Téléphone chauffeur</label><input name="driver_phone" inputmode="tel"></div><div class="field full"><label>Notes</label><textarea name="notes"></textarea></div><div class="full actions"><button class="green">Enregistrer le véhicule</button></div></form>
+<div id="vehicleList" class="list"></div>
+<h3>Planifier une livraison</h3>
+<form id="deliveryForm" class="formgrid"><div class="field"><label>Commande confirmée *</label><select name="order_id" id="deliveryOrder" required></select></div><div class="field"><label>Camion</label><select name="vehicle_id" id="deliveryVehicle"></select></div><div class="field"><label>Date de livraison</label><input name="delivery_date" type="date"></div><div class="field"><label>Chauffeur (si différent)</label><input name="driver_name"></div><div class="field"><label>Téléphone chauffeur</label><input name="driver_phone" inputmode="tel"></div><div class="field full"><label>Instructions</label><textarea name="notes"></textarea></div><div class="full actions"><button class="green">Planifier la livraison</button></div></form>
+<div id="deliveryList" class="list"></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
+let db,shopId,userId,role,materials=[],orders=[],vehicles=[];
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>Number(n||0).toLocaleString('fr-FR',{maximumFractionDigits:0})+' FBu';
+function say(s,error=false){$('notice').textContent=s;$('notice').className='notice'+(error?' error':'');}
+function tab(id){document.querySelectorAll('main section').forEach(x=>x.classList.toggle('hidden',x.id!==id));document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>tab(b.dataset.tab)));
+function addLine(target){
+ const row=document.createElement('div');row.className='line';
+ row.innerHTML='<div class="field material"><label>Matériau</label><select class="mat"><option value="">Choisir…</option>'+materials.map(m=>'<option value="'+m.id+'">'+esc(m.name)+' — '+esc(m.unit)+'</option>').join('')+'</select></div><div class="field"><label>Quantité</label><input class="qty" type="number" min="0.001" step="0.001" value="1"></div><div class="field"><label>Prix unitaire</label><input class="priceInput" type="number" min="0" step="1" value="0"></div><button type="button" class="light remove">×</button>';
+ row.querySelector('.mat').addEventListener('change',e=>{const m=materials.find(x=>x.id===e.target.value);row.querySelector('.priceInput').value=m?m.unit_price:0;recalc(target);});
+ row.querySelectorAll('input').forEach(x=>x.addEventListener('input',()=>recalc(target)));
+ row.querySelector('.remove').addEventListener('click',()=>{row.remove();recalc(target);});
+ $(target).appendChild(row);recalc(target);
+}
+function lines(target){return [...$(target).querySelectorAll('.line')].map(r=>{const m=materials.find(x=>x.id===r.querySelector('.mat').value);const q=Number(r.querySelector('.qty').value||0),p=Number(r.querySelector('.priceInput').value||0);return m&&q>0?{material_id:m.id,name:m.name,quantity:q,unit:m.unit,unit_price:p,line_total:q*p}:null;}).filter(Boolean);}
+function recalc(target){const items=lines(target),fee=Number(document.querySelector('#'+(target==='orderLines'?'orderForm':'quoteForm')+' [name=delivery_fee]').value||0);const total=items.reduce((s,x)=>s+x.line_total,0)+fee;$(target==='orderLines'?'orderTotal':'quoteTotal').textContent=(target==='orderLines'?'Total : ':'Total estimé : ')+money(total);}
+async function loadAll(){
+ const [mr,orr,vr]=await Promise.all([
+  db.from('construction_materials').select('*').eq('shop_id',shopId).eq('is_active',true).order('category').order('name'),
+  db.from('construction_material_orders').select('*').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(60),
+  db.from('construction_material_vehicles').select('*').eq('shop_id',shopId).eq('is_active',true).order('vehicle_name')
+ ]);
+ if(mr.error)throw mr.error;if(orr.error)throw orr.error;if(vr.error)throw vr.error;
+ materials=mr.data||[];orders=orr.data||[];vehicles=vr.data||[];
+ renderMaterials();renderOrders();renderVehicles();refreshSelects();await loadQuotes();await loadDeliveries();
+}
+function renderMaterials(){
+ $('materialList').innerHTML=materials.length?materials.map(m=>'<div class="item"><strong>'+esc(m.name)+'</strong> <span class="pill">'+esc(m.category)+'</span><small>'+esc(m.unit)+' · '+money(m.unit_price)+(m.manage_stock?' · Stock : '+m.available_quantity:' · Disponibilité à confirmer')+'</small>'+(m.description?'<small>'+esc(m.description)+'</small>':'')+'</div>').join(''):'<div class="muted">Aucun matériau enregistré pour le moment.</div>';
+}
+function renderOrders(){
+ $('orderList').innerHTML=orders.length?orders.map(o=>'<div class="item"><strong>Commande '+esc(o.order_number)+'</strong> <span class="pill">'+esc(o.status)+'</span><small>'+esc(o.client_name)+' · '+esc(o.delivery_address)+' · '+money(o.total)+' · Paiement : '+esc(o.payment_status)+'</small><div class="row" style="margin-top:8px"><select data-order-status="'+o.id+'"><option value="received">Reçue</option><option value="confirmed">Confirmée</option><option value="loading">Chargement</option><option value="in_transit">En route</option><option value="delivered">Livrée</option><option value="cancelled">Annulée</option></select><button class="light" data-save-order="'+o.id+'">Mettre à jour</button></div></div>').join(''):'<div class="muted">Aucune commande pour le moment.</div>';
+ orders.forEach(o=>{const s=document.querySelector('[data-order-status="'+o.id+'"]');if(s)s.value=o.status;});
+ document.querySelectorAll('[data-save-order]').forEach(b=>b.addEventListener('click',async()=>{const id=b.dataset.saveOrder,status=document.querySelector('[data-order-status="'+id+'"]').value;const {error}=await db.from('construction_material_orders').update({status,updated_at:new Date().toISOString()}).eq('id',id).eq('shop_id',shopId);if(error)say(error.message,true);else{say('Statut de la commande mis à jour.');await loadAll();}}));
+}
+function refreshSelects(){
+ $('orderLines').innerHTML='';$('quoteLines').innerHTML='';addLine('orderLines');addLine('quoteLines');
+ $('deliveryOrder').innerHTML='<option value="">Choisir une commande…</option>'+orders.filter(o=>!['delivered','cancelled'].includes(o.status)).map(o=>'<option value="'+o.id+'">'+esc(o.order_number)+' — '+esc(o.client_name)+'</option>').join('');
+ $('deliveryVehicle').innerHTML='<option value="">À attribuer plus tard</option>'+vehicles.map(v=>'<option value="'+v.id+'">'+esc(v.vehicle_name)+' '+esc(v.plate_number||'')+'</option>').join('');
+}
+function renderVehicles(){
+ $('vehicleList').innerHTML=vehicles.length?vehicles.map(v=>'<div class="item"><strong>'+esc(v.vehicle_name)+'</strong><small>'+esc(v.plate_number||'Immatriculation non renseignée')+' · '+(v.capacity?esc(v.capacity)+' '+esc(v.capacity_unit):'Capacité non précisée')+' · Chauffeur : '+esc(v.driver_name||'à attribuer')+' '+esc(v.driver_phone||'')+'</small></div>').join(''):'<div class="muted">Aucun véhicule enregistré.</div>';
+}
+async function loadQuotes(){
+ const {data,error}=await db.from('construction_material_quotes').select('*').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(50);if(error)throw error;
+ $('quoteList').innerHTML=data.length?data.map(q=>'<div class="item"><strong>Devis '+esc(q.quote_number)+'</strong> <span class="pill">'+esc(q.status)+'</span><small>'+esc(q.client_name)+' · '+money(q.total)+' · '+esc(q.delivery_address||'Adresse à confirmer')+'</small></div>').join(''):'<div class="muted">Aucun devis enregistré.</div>';
+}
+async function loadDeliveries(){
+ const {data,error}=await db.from('construction_material_deliveries').select('*,construction_material_orders(order_number,client_name,delivery_address),construction_material_vehicles(vehicle_name,plate_number)').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(50);if(error)throw error;
+ $('deliveryList').innerHTML=data.length?data.map(d=>'<div class="item"><strong>Livraison : '+esc(d.construction_material_orders?.order_number||'Commande')+'</strong> <span class="pill">'+esc(d.status)+'</span><small>'+esc(d.construction_material_orders?.client_name||'')+' · '+esc(d.construction_material_orders?.delivery_address||'')+' · '+esc(d.construction_material_vehicles?.vehicle_name||'Camion non attribué')+' · Chauffeur : '+esc(d.driver_name||'à confirmer')+'</small></div>').join(''):'<div class="muted">Aucune livraison planifiée.</div>';
+}
+function number(prefix){return prefix+'-'+Date.now().toString().slice(-7);}
+$('materialForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!['owner','manager'].includes(role)){say('Seul le propriétaire ou le gestionnaire peut modifier le catalogue.',true);return;}
+ const f=new FormData(e.target),payload=Object.fromEntries(f.entries());payload.shop_id=shopId;payload.created_by=userId;payload.unit_price=Number(payload.unit_price);payload.available_quantity=Number(payload.available_quantity||0);payload.manage_stock=payload.manage_stock==='true';
+ const {error}=await db.from('construction_materials').insert(payload);if(error){say(error.message,true);return;}e.target.reset();say('Matériau ajouté au catalogue.');await loadAll();
+});
+$('orderForm').addEventListener('submit',async e=>{
+ e.preventDefault();const f=new FormData(e.target),items=lines('orderLines');if(!items.length){say('Ajoute au moins un matériau à la commande.',true);return;}
+ const subtotal=items.reduce((s,x)=>s+x.line_total,0),delivery_fee=Number(f.get('delivery_fee')||0);
+ const payload={shop_id:shopId,order_number:number('CMD'),client_name:f.get('client_name'),client_phone:f.get('client_phone'),delivery_address:f.get('delivery_address'),delivery_area:f.get('delivery_area'),requested_date:f.get('requested_date')||null,items,subtotal,delivery_fee,total:subtotal+delivery_fee,notes:f.get('notes'),payment_status:f.get('payment_status'),created_by:userId};
+ const {error}=await db.from('construction_material_orders').insert(payload);if(error){say(error.message,true);return;}e.target.reset();say('Commande enregistrée.');await loadAll();
+});
+$('quoteForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!['owner','manager'].includes(role)){say('Seul le propriétaire ou le gestionnaire peut préparer un devis.',true);return;}
+ const f=new FormData(e.target),items=lines('quoteLines');if(!items.length){say('Ajoute au moins un matériau au devis.',true);return;}
+ const subtotal=items.reduce((s,x)=>s+x.line_total,0),delivery_fee=Number(f.get('delivery_fee')||0);
+ const payload={shop_id:shopId,quote_number:number('DEV'),client_name:f.get('client_name'),client_phone:f.get('client_phone'),delivery_address:f.get('delivery_address'),delivery_area:f.get('delivery_area'),requested_date:f.get('requested_date')||null,items,subtotal,delivery_fee,total:subtotal+delivery_fee,notes:f.get('notes'),created_by:userId};
+ const {error}=await db.from('construction_material_quotes').insert(payload);if(error){say(error.message,true);return;}e.target.reset();say('Devis enregistré en brouillon.');await loadQuotes();
+});
+$('vehicleForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!['owner','manager'].includes(role)){say('Accès réservé au propriétaire et au gestionnaire.',true);return;}
+ const f=new FormData(e.target),payload=Object.fromEntries(f.entries());payload.shop_id=shopId;payload.capacity=payload.capacity?Number(payload.capacity):null;
+ const {error}=await db.from('construction_material_vehicles').insert(payload);if(error){say(error.message,true);return;}e.target.reset();say('Véhicule enregistré.');await loadAll();
+});
+$('deliveryForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!['owner','manager'].includes(role)){say('Accès réservé au propriétaire et au gestionnaire.',true);return;}
+ const f=new FormData(e.target);if(!f.get('order_id'))return;
+ const payload={shop_id:shopId,order_id:f.get('order_id'),vehicle_id:f.get('vehicle_id')||null,delivery_date:f.get('delivery_date')||null,driver_name:f.get('driver_name'),driver_phone:f.get('driver_phone'),notes:f.get('notes')};
+ const {error}=await db.from('construction_material_deliveries').insert(payload);if(error){say(error.message,true);return;}
+ await db.from('construction_material_orders').update({status:'confirmed',updated_at:new Date().toISOString()}).eq('id',f.get('order_id')).eq('shop_id',shopId);
+ e.target.reset();say('Livraison planifiée.');await loadAll();
+});
+$('addOrderLine').addEventListener('click',()=>addLine('orderLines'));$('addQuoteLine').addEventListener('click',()=>addLine('quoteLines'));
+document.querySelectorAll('#orderForm [name=delivery_fee],#quoteForm [name=delivery_fee]').forEach((x,i)=>x.addEventListener('input',()=>recalc(i?'quoteLines':'orderLines')));
+(async()=>{
+ try{
+  db=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
+  const {data:{session},error}=await db.auth.getSession();if(error||!session){location.replace('connexion.html');return;}userId=session.user.id;
+  const {data:members,error:me}=await db.from('shop_members').select('shop_id,role').eq('user_id',userId);if(me)throw me;
+  const key='gurisha_active_shop_'+userId,stored=localStorage.getItem(key),member=(members||[]).find(m=>m.shop_id===stored)||(members||[])[0];if(!member)throw new Error('Aucun établissement associé à ce compte.');
+  shopId=member.shop_id;role=member.role;
+  const {data:cfg,error:ce}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(ce)throw ce;
+  if(!(cfg.enabled_modules||[]).includes('construction_materials_delivery'))throw new Error('Le module Matériaux de construction & livraison n’est pas activé pour cet établissement.');
+  if(!['owner','manager','cashier'].includes(role))throw new Error('Accès non autorisé à ce module.');
+  const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=(shop?.name||'Établissement')+' · '+role;
+  if(role==='cashier'){document.querySelectorAll('[data-tab=quotes],[data-tab=fleet]').forEach(b=>b.classList.add('hidden'));$('materialForm').classList.add('hidden');$('vehicleForm').classList.add('hidden');$('deliveryForm').classList.add('hidden');}
+  await loadAll();
+ }catch(err){say(err.message||'Impossible de charger le module.',true);}
+})();
+</script></body></html>
