@@ -99,7 +99,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <div class="card"><small>Total des ventes</small><strong id="nSales">0 FBu</strong></div>
 </div>
 <div class="toolbar" aria-label="Navigation principale">
-<button class="light" type="button" onclick="switchStock()">STOCK</button><button class="green" type="button" onclick="switchCaisse()">CAISSE</button><button class="light" type="button" id="fastFoodStockButton" onclick="location.href='fast-food-stock.html'">STOCK FAST-FOOD</button><button class="light" id="salesTabButton" onclick="showHistoryTab('sales')">VENTES</button><button class="light" id="purchasesTabButton" onclick="showHistoryTab('purchases')">ACHATS</button><button class="green" onclick="openProduct()">+ Ajouter un article</button>
+<button class="light" type="button" onclick="switchStock()">STOCK</button><button class="green" type="button" onclick="switchCaisse()">CAISSE</button><button class="light" type="button" id="fastFoodStockButton" onclick="location.href='fast-food-stock.html'">STOCK FAST-FOOD</button><button class="green" type="button" id="fastFoodCaisseButton" onclick="location.href='fast-food-caisse.html'">CAISSE FAST-FOOD</button><button class="light" type="button" id="fastFoodMenuButton" onclick="location.href='fast-food-menu.html'">MENUS FAST-FOOD</button><button class="light" id="salesTabButton" onclick="showHistoryTab('sales')">VENTES</button><button class="light" id="purchasesTabButton" onclick="showHistoryTab('purchases')">ACHATS</button><button class="green" onclick="openProduct()">+ Ajouter un article</button>
 <button class="light" id="addCategoryButton" onclick="openCategory()">+ Ajouter une catégorie</button>
 <button class="light" id="exportButton" onclick="exportCSV()">Exporter CSV</button>
 </div>
@@ -211,6 +211,7 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     const canViewHistory=['owner','manager','gestionnaire'].includes(membership.role);
     if(!canViewHistory){ document.getElementById('salesTabButton').hidden=true; document.getElementById('purchasesTabButton').hidden=true; }
     if(!['owner','manager','gestionnaire'].includes(membership.role)) document.getElementById('fastFoodStockButton').hidden=true;
+    if(!['owner','manager','gestionnaire'].includes(membership.role)) document.getElementById('fastFoodMenuButton').hidden=true;
     if(membership.role==='cashier'){
       document.getElementById('addCategoryButton').hidden=true;
       document.getElementById('exportButton').hidden=true;
