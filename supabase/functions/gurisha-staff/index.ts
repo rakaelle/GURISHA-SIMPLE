@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
       const { data: profiles, error } = await admin
         .from("staff_profiles")
-        .select("id,user_id,auth_email,role,is_active,display_name")
+        .select("id,user_id,auth_email,role,roles,is_active,display_name")
         .eq("shop_id", shopId)
         .ilike("display_name", name)
         .limit(2);
@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
           id: profile.user_id,
           name: profile.display_name,
           role: profile.role,
+          roles: Array.isArray(profile.roles) && profile.roles.length ? profile.roles : [profile.role],
           shop_id: shopId,
         },
       });
@@ -149,7 +150,7 @@ Deno.serve(async (req) => {
     if (action === "list") {
       const { data, error: listError } = await admin
         .from("staff_profiles")
-        .select("id,display_name,role,is_active,created_at")
+        .select("id,display_name,role,roles,is_active,created_at")
         .eq("shop_id", shopId)
         .order("display_name");
       if (listError) throw listError;
@@ -158,10 +159,18 @@ Deno.serve(async (req) => {
 
     if (action === "create") {
       const name = String(body.name || "").trim();
-      const role = String(body.role || "");
+      const allowedRoles = [
+        "manager","cashier","seller","stock_manager","preparer","order_preparer",
+        "delivery_person","hairdresser","beautician","receptionist","baker",
+        "mechanic","driver","reservation_manager","delivery_manager","mover",
+        "team_leader","event_manager","technician"
+      ];
+      const roles = [...new Set(Array.isArray(body.roles) ? body.roles.map((r: unknown) => String(r)) : [String(body.role || "")])];
       const pin = String(body.pin || "");
       if (name.length < 2 || name.length > 80) return json({ error: "Le nom doit contenir 2 à 80 caractères." }, 400);
-      if (!["manager", "cashier", "preparer"].includes(role)) return json({ error: "Fonction invalide." }, 400);
+      if (!roles.length || roles.some((r: string) => !allowedRoles.includes(r))) return json({ error: "Sélectionnez au moins un rôle valide." }, 400);
+      // Le rôle historique principal reste compatible avec les écrans et règles existants.
+      const role = roles.includes("manager") ? "manager" : (roles.length === 1 && roles[0] === "preparer" ? "preparer" : "cashier");
       if (!/^\d{6}$/.test(pin)) return json({ error: "Choisissez un code PIN de 6 chiffres." }, 400);
 
       const profileId = crypto.randomUUID();
@@ -185,7 +194,7 @@ Deno.serve(async (req) => {
 
       const { error: profileError } = await admin.from("staff_profiles").insert({
         id: profileId, shop_id: shopId, user_id: created.user.id,
-        auth_email: authEmail, display_name: name, role, is_active: true,
+        auth_email: authEmail, display_name: name, role, roles, is_active: true,
       });
       if (profileError) {
         await admin.from("shop_members").delete().eq("shop_id", shopId).eq("user_id", created.user.id);
