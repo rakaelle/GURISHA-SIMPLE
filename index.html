@@ -140,20 +140,58 @@ const defaultProducts=[
 let categories=defaultCategories.slice(),products=defaultProducts.slice(),editingId=null,saleId=null,lotId=null;
 function isCashier(){return window.GURISHA_ROLE==='cashier';}
 let syncReady=false;
+let syncBusy=false;
+let localDirty=false;
 let syncQueue=Promise.resolve();
+let lastRemoteSignature='';
+function currentPayload(){return {categories:categories,products:products};}
 function save(){
-  const payload={categories:categories,products:products};
-  localStorage.setItem(KEY,JSON.stringify(payload));
+  const payload=currentPayload();
+  const signature=JSON.stringify(payload);
+  localStorage.setItem(KEY,signature);
   if(syncReady){
+    localDirty=true;
     syncQueue=syncQueue.then(async()=>{
+      syncBusy=true;
       const {error}=await window.GURISHA_SUPABASE_CLIENT.rpc('gurisha_save_data',{p_payload:payload});
       if(error){
         console.error('Erreur de synchronisation GURISHA:',error);
-        document.querySelector('footer').textContent='GURISHA SIMPLE — Erreur de synchronisation. Vérifiez la connexion.';
+        document.querySelector('footer').textContent='GURISHA SIMPLE — Synchronisation en erreur. Vos changements restent sur cet appareil.';
       }else{
+        lastRemoteSignature=signature;
+        if(JSON.stringify(currentPayload())===signature) localDirty=false;
         document.querySelector('footer').textContent='GURISHA SIMPLE — Données synchronisées avec la boutique.';
       }
-    }).catch(error=>console.error('Synchronisation impossible:',error));
+      syncBusy=false;
+    }).catch(error=>{
+      syncBusy=false;
+      console.error('Synchronisation impossible:',error);
+      document.querySelector('footer').textContent='GURISHA SIMPLE — Synchronisation impossible. Vérifiez la connexion.';
+    });
+  }
+}
+async function refreshSharedData(){
+  if(!syncReady||localDirty||syncBusy)return;
+  const {data,error}=await window.GURISHA_SUPABASE_CLIENT.rpc('gurisha_get_data');
+  if(error){console.error('Actualisation GURISHA:',error);return;}
+  if(!data||!Array.isArray(data.categories)||!Array.isArray(data.products))return;
+  const signature=JSON.stringify(data);
+  if(signature===lastRemoteSignature)return;
+  lastRemoteSignature=signature;
+  if(signature!==JSON.stringify(currentPayload())){
+    categories=data.categories;
+    products=data.products;
+    products.forEach(p=>{
+      if(p.buyPrice===undefined)p.buyPrice=0;
+      if(p.salesTotal===undefined)p.salesTotal=0;
+      if(p.sold===undefined)p.sold=0;
+      if(p.lotA===undefined)p.lotA=0;
+      if(p.lotB===undefined)p.lotB=0;
+    });
+    localStorage.setItem(KEY,JSON.stringify(currentPayload()));
+    fillCategories();
+    render();
+    document.querySelector('footer').textContent='GURISHA SIMPLE — Données actualisées depuis la boutique.';
   }
 }
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x){if(Array.isArray(x.categories))categories=x.categories;if(Array.isArray(x.products))products=x.products;}}catch(e){console.error(e);}
@@ -232,9 +270,11 @@ window.gurishaInit=async function(){
     save();
   }
   syncReady=true;
+  lastRemoteSignature=JSON.stringify(currentPayload());
   fillCategories();
   render();
-  document.querySelector('footer').textContent='GURISHA SIMPLE — Données synchronisées avec la boutique.';
+  document.querySelector('footer').textContent='GURISHA SIMPLE — Synchronisé. Actualisation automatique activée.';
+  window.setInterval(refreshSharedData,4000);
 };
 </script>
 </body>
