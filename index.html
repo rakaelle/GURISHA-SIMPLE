@@ -432,7 +432,7 @@ if(!name||![initial,a,b].every(x=>Number.isInteger(x)&&x>=0)||![buy,sell].every(
 const existing=editingId!==null?products.find(x=>x.id===editingId):null;
 let mediaItems=[...(existing?.media_items||[])];
 const files=document.getElementById('productMedia').files;
-try{if(files.length)mediaItems=mediaItems.concat(await uploadProductMedia(files));}catch(err){alert('Média non envoyé : '+err.message);return;}
+try{if(files.length)mediaItems=await uploadProductMedia(files);}catch(err){alert('Média non envoyé : '+err.message);return;}
 const data={name:name,format:v('format'),container:v('container'),category:v('category'),initial:initial,lotA:a,lotB:b,buyPrice:buy,sellPrice:sell,media_items:mediaItems};
 if(existing){Object.assign(existing,data);}else{products.push(Object.assign({id:Date.now(),sold:0,salesTotal:0},data));}
 save();render();closeModal('productModal');
