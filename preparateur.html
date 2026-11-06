@@ -122,10 +122,14 @@ document.getElementById('refreshBtn').addEventListener('click',loadOrders);
     client=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
     const {data:{session},error}=await client.auth.getSession();
     if(error||!session){location.replace('connexion.html');return;}
-    const {data:members,error:memberError}=await client.from('shop_members').select('shop_id,role').eq('user_id',session.user.id).eq('role','preparer');
+    const staffRoles=Array.isArray(session.user.user_metadata?.gurisha_roles)?session.user.user_metadata.gurisha_roles:[];
+    const staffShopId=session.user.user_metadata?.shop_id||null;
+    if(!staffRoles.includes('preparer'))throw new Error('Cet espace est réservé aux employés ayant le rôle Préparateur.');
+    if(!staffShopId)throw new Error('Boutique de l’employé introuvable. Demande à l’administrateur de vérifier son compte.');
+    const {data:membership,error:memberError}=await client.from('shop_members').select('shop_id,role').eq('user_id',session.user.id).eq('shop_id',staffShopId).maybeSingle();
     if(memberError)throw memberError;
-    if(!members||!members.length){throw new Error('Cet espace est réservé aux comptes Préparateur.');}
-    shopId=members[0].shop_id;
+    if(!membership)throw new Error('Aucun accès à cette boutique. Demande à l’administrateur de vérifier ton affectation.');
+    shopId=membership.shop_id;
     await loadOrders();
     setInterval(loadOrders,12000);
   }catch(err){message(err.message||'Impossible d’ouvrir cet espace.','err');ordersBox.innerHTML='<div class="empty"><strong>Accès indisponible</strong>Vérifie ton compte ou contacte l’administrateur.</div>';}
