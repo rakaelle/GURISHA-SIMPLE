@@ -82,7 +82,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <button class="profile-link" id="profileButton" type="button" title="Mon profil" aria-label="Mon profil"><span aria-hidden="true">👤</span></button>
 <h1>GURISHA</h1><p>Gestion des stocks, achats et ventes</p>
 <a class="admin-link" id="adminLink" href="administration.html" hidden>Administration</a>
-<div id="shopSwitcher" hidden style="margin-top:10px;display:none;gap:8px;align-items:center;flex-wrap:wrap"><label for="activeShopSelect" style="font-size:12px;color:#fff">Boutique :</label><select id="activeShopSelect" style="max-width:220px;padding:7px;border-radius:8px;border:1px solid #ffffff80;background:#fff;color:#126b42"></select><button id="addShopButton" type="button" class="light" style="padding:7px 10px">+ Ajouter une boutique</button></div>
+<div id="shopSwitcher" hidden style="margin-top:10px;display:none;gap:8px;align-items:center;flex-wrap:wrap"><label for="activeShopSelect" style="font-size:12px;color:#fff">Boutique :</label><select id="activeShopSelect" style="max-width:220px;padding:7px;border-radius:8px;border:1px solid #ffffff80;background:#fff;color:#126b42"></select><button id="addShopButton" type="button" class="light" style="padding:7px 10px">+ Ajouter une boutique</button><button id="activitiesButton" type="button" class="light" style="padding:7px 10px" onclick="location.href='activites.html'">Activités</button></div>
 </header>
 <div id="gurishaInstallNotice" hidden style="max-width:1500px;margin:12px auto;padding:12px 15px;background:#e8f5ed;border:1px solid #cfe5d6;border-radius:12px;color:#245b3b">
   <strong style="display:block;font-size:13px;margin-bottom:4px">Installez GURISHA sur ce téléphone</strong>
@@ -101,7 +101,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <div class="card"><small>Total des ventes</small><strong id="nSales">0 FBu</strong></div>
 </div>
 <div class="toolbar" aria-label="Navigation principale">
-<button class="light" type="button" onclick="switchStock()">STOCK</button><button class="light" type="button" id="activitiesButton" onclick="location.href='activites.html'" hidden>ACTIVITÉS</button><button class="green" type="button" onclick="switchCaisse()">CAISSE</button><button class="light" type="button" id="fastFoodStockButton" onclick="location.href='fast-food-stock.html'">STOCK FAST-FOOD</button><button class="light" type="button" id="fastFoodMenuButton" onclick="location.href='fast-food-menu.html'">MENUS FAST-FOOD</button><button class="light" id="salesTabButton" onclick="showHistoryTab('sales')">VENTES</button><button class="light" id="purchasesTabButton" onclick="showHistoryTab('purchases')">ACHATS</button><button class="green" onclick="openProduct()">+ Ajouter un article</button>
+<button class="light" type="button" onclick="switchStock()">STOCK</button><button class="green" type="button" onclick="switchCaisse()">CAISSE</button><button class="light" type="button" id="fastFoodStockButton" onclick="location.href='fast-food-stock.html'">STOCK FAST-FOOD</button><button class="light" type="button" id="fastFoodMenuButton" onclick="location.href='fast-food-menu.html'">MENUS FAST-FOOD</button><button class="light" id="salesTabButton" onclick="showHistoryTab('sales')">VENTES</button><button class="light" id="purchasesTabButton" onclick="showHistoryTab('purchases')">ACHATS</button><button class="green" onclick="openProduct()">+ Ajouter un article</button>
 <button class="light" id="addCategoryButton" onclick="openCategory()">+ Ajouter une catégorie</button>
 <button class="light" id="exportButton" onclick="exportCSV()">Exporter CSV</button>
 </div>
@@ -110,6 +110,42 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 </main>
 <footer>GURISHA SIMPLE — Les données de cette version sont enregistrées dans ce navigateur.</footer>
 <div class="modal" id="profileModal"><div class="panel"><h2>Mon profil</h2><p id="profileEmail" class="hint"></p><div class="buttons"><button type="button" class="gray" onclick="closeModal('profileModal')">Fermer</button><button type="button" class="red" id="logoutButton">Se déconnecter</button></div></div></div>
+
+
+<div class="modal" id="createShopModal"><div class="panel" style="max-width:650px">
+<h2>Ajouter une boutique</h2>
+<form id="shopCreateForm">
+<div class="field"><label for="newShopName">Nom de la boutique ou de l'établissement</label><input id="newShopName" required minlength="2" maxlength="100" placeholder="Ex. Boutique Espoir"></div>
+<p class="hint">1. Choisissez le type d'établissement. Vous pouvez en sélectionner plusieurs.</p>
+<div class="two" id="newShopActivities">
+<label class="choice"><input type="checkbox" value="commerce"><span><b>Commerce / boutique</b><small>Magasin, supermarché, vêtements…</small></span></label>
+<label class="choice"><input type="checkbox" value="restaurant"><span><b>Restaurant / fast-food</b><small>Restaurant, snack, plats…</small></span></label>
+<label class="choice"><input type="checkbox" value="bakery"><span><b>Boulangerie / pâtisserie</b><small>Pain, gâteaux, fabrication</small></span></label>
+<label class="choice"><input type="checkbox" value="salon"><span><b>Salon / beauté</b><small>Coiffure, esthétique, spa</small></span></label>
+<label class="choice"><input type="checkbox" value="garage"><span><b>Garage / mécanique</b><small>Entretien et réparation</small></span></label>
+<label class="choice"><input type="checkbox" value="workshop"><span><b>Atelier / réparation</b><small>Couture, impression, dépannage</small></span></label>
+<label class="choice"><input type="checkbox" value="transport"><span><b>Transport de personnes</b><small>Taxi, chauffeur, transfert</small></span></label>
+<label class="choice"><input type="checkbox" value="moving"><span><b>Déménagement</b><small>Transport de meubles</small></span></label>
+<label class="choice"><input type="checkbox" value="delivery"><span><b>Livraison / colis</b><small>Repas, courses, colis</small></span></label>
+<label class="choice"><input type="checkbox" value="event"><span><b>Événementiel</b><small>Organisation et location</small></span></label>
+<label class="choice"><input type="checkbox" value="other"><span><b>Autre activité</b><small>Activité spécialisée</small></span></label>
+</div>
+<p class="hint" style="margin-top:14px">2. Choisissez les fonctionnalités de cette boutique.</p>
+<div class="two" id="newShopModules">
+<label class="choice"><input type="checkbox" value="commerce"><span><b>Stock et achats</b><small>Articles et approvisionnement</small></span></label>
+<label class="choice"><input type="checkbox" value="pos"><span><b>Caisse / ventes</b><small>Encaissement des ventes</small></span></label>
+<label class="choice"><input type="checkbox" value="fast_food"><span><b>Menus / commandes restaurant</b><small>Ingrédients et préparation</small></span></label>
+<label class="choice"><input type="checkbox" value="appointments"><span><b>Rendez-vous</b><small>Calendrier et réservations</small></span></label>
+<label class="choice"><input type="checkbox" value="service_management"><span><b>Prestations / interventions</b><small>Devis et suivi des services</small></span></label>
+<label class="choice"><input type="checkbox" value="transport"><span><b>Transport</b><small>Chauffeurs, véhicules, trajets</small></span></label>
+<label class="choice"><input type="checkbox" value="delivery"><span><b>Livraison / colis</b><small>Courses et suivi</small></span></label>
+<label class="choice"><input type="checkbox" value="moving"><span><b>Déménagement</b><small>Équipes et missions</small></span></label>
+<label class="choice"><input type="checkbox" value="production"><span><b>Production / fabrication</b><small>Recettes et matières premières</small></span></label>
+<label class="choice"><input type="checkbox" value="event_management"><span><b>Événementiel / location</b><small>Réservations et matériel</small></span></label>
+</div>
+<div class="hint" style="margin-top:12px">Tu pourras modifier ces choix plus tard dans « Activités ». La boutique ne sera pas automatiquement publiée sur GURISHA SERVICES.</div>
+<div class="buttons"><button type="button" class="gray" onclick="closeModal('createShopModal')">Annuler</button><button type="submit" class="green" id="createShopSubmit">Créer la boutique</button></div>
+</form></div></div>
 
 <div class="modal" id="productModal"><div class="panel">
 <h2 id="productTitle">Ajouter un article</h2>
@@ -196,18 +232,28 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     window.GURISHA_USER_ID=session.user.id;
     if(membership.role==='owner'){
       document.getElementById('adminLink').hidden=false;
-      document.getElementById('activitiesButton').hidden=false;
       const switcher=document.getElementById('shopSwitcher');switcher.hidden=false;switcher.style.display='flex';
       const select=document.getElementById('activeShopSelect');
       select.innerHTML=shops.map(sh=>'<option value="'+sh.id+'">'+String(sh.name).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</option>').join('');
       select.value=activeShopId;
       select.addEventListener('change',()=>{localStorage.setItem(activeKey,select.value);location.reload();});
-      document.getElementById('addShopButton').addEventListener('click',async()=>{
-        const name=prompt('Quel est le nom de cette nouvelle boutique ?');
-        if(!name||name.trim().length<2)return;
-        const btn=document.getElementById('addShopButton');btn.disabled=true;
-        const {data:newId,error}=await authClient.rpc('create_shop_for_current_user',{p_name:name.trim()});
-        if(error){alert('Création impossible : '+error.message);btn.disabled=false;return;}
+      document.getElementById('addShopButton').addEventListener('click',()=>{
+        document.getElementById('shopCreateForm').reset();
+        openModal('createShopModal');
+      });
+      document.getElementById('shopCreateForm').addEventListener('submit',async(event)=>{
+        event.preventDefault();
+        const name=document.getElementById('newShopName').value.trim();
+        const activities=[...document.querySelectorAll('#newShopActivities input:checked')].map(x=>x.value);
+        const modules=[...document.querySelectorAll('#newShopModules input:checked')].map(x=>x.value);
+        if(activities.length===0){alert('Choisissez au moins un type d’établissement.');return;}
+        if(modules.length===0){alert('Choisissez au moins une fonctionnalité.');return;}
+        const btn=document.getElementById('createShopSubmit');btn.disabled=true;btn.textContent='Création…';
+        const {data:newId,error}=await authClient.rpc('create_shop_for_current_user_with_modules',{
+          p_name:name,p_activity_types:activities,p_enabled_modules:modules
+        });
+        btn.disabled=false;btn.textContent='Créer la boutique';
+        if(error){alert('Création impossible : '+error.message);return;}
         localStorage.setItem(activeKey,newId);location.reload();
       });
     }
