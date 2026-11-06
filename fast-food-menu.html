@@ -12,6 +12,7 @@
 <div class="field"><label>Catégorie</label><select name="category"><option>Sandwichs</option><option>Rôlegs</option><option>Beignets</option><option>Brochettes</option><option>Plats</option><option>Boissons</option><option>Autres</option></select></div>
 <div class="field"><label>Prix de vente (FBu) *</label><input name="sale_price" type="number" min="0" step="1" required placeholder="5000"></div>
 <div class="field"><label>Description visible au client</label><input name="description" placeholder="Description courte du plat"></div>
+<div class="field full"><label>Photos ou vidéos du plat</label><input name="media" type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime" multiple><small class="muted">Ajoutez des photos ou vidéos pour présenter le plat.</small></div>
 </div>
 <h3>Composition interne du plat</h3><p class="muted">Les ingrédients sont réservés au préparateur et au gestionnaire. Le caissier voit uniquement les emballages.</p>
 <div id="components"></div><button class="light" type="button" id="addComponent">+ Ajouter un ingrédient ou emballage</button>
@@ -33,7 +34,21 @@ function addComponent(){
  kind.addEventListener('change',fill);row.querySelector('.remove').addEventListener('click',()=>row.remove());fill();$('components').appendChild(row);
 }
 function renderMenus(){
- $('menuList').innerHTML=menus.length?menus.map(m=>'<article class="menu-card"><h4>'+esc(m.name)+' <span class="price">· '+Number(m.sale_price).toLocaleString('fr-FR')+' FBu</span></h4><div class="muted">'+esc(m.category)+' · '+esc(m.description||'')+'</div></article>').join(''):'<div class="empty">Aucun menu enregistré pour le moment.</div>';
+ $('menuList').innerHTML=menus.length?menus.map(m=>'<article class="menu-card"><h4>'+esc(m.name)+' <span class="price">· '+Number(m.sale_price).toLocaleString('fr-FR')+' FBu</span></h4><div class="muted">'+esc(m.category)+' · '+esc(m.description||'')+'</div><div class="media">'+(m.media_items||[]).map(x=>x.kind==='video'?'<video controls playsinline style="width:110px;height:85px;object-fit:cover;border-radius:8px" src="'+esc(x.url)+'"></video>':'<img style="width:110px;height:85px;object-fit:cover;border-radius:8px" src="'+esc(x.url)+'" alt="Photo du plat">').join('')+'</div></article>').join(''):'<div class="empty">Aucun menu enregistré pour le moment.</div>';
+}
+async function uploadMenuMedia(files){
+ const items=[];
+ for(const file of [...files]){
+  if(file.size>50*1024*1024)throw new Error('Un fichier dépasse 50 Mo.');
+  if(!file.type.startsWith('image/')&&!file.type.startsWith('video/'))throw new Error('Format de média non autorisé.');
+  const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path=shopId+'/fast-food/'+crypto.randomUUID()+'.'+ext;
+  const {error}=await db.storage.from('gurisha-catalog-media').upload(path,file,{contentType:file.type});
+  if(error)throw error;
+  const {data}=db.storage.from('gurisha-catalog-media').getPublicUrl(path);
+  items.push({url:data.publicUrl,kind:file.type.startsWith('video/')?'video':'image',name:file.name});
+ }
+ return items;
 }
 async function load(){
  const [a,b]=await Promise.all([db.from('fast_food_ingredients').select('id,name,category,base_unit').eq('shop_id',shopId).eq('is_active',true).order('name'),db.from('fast_food_menu_items').select('*').eq('shop_id',shopId).eq('is_active',true).order('category').order('name')]);
@@ -44,7 +59,7 @@ $('menuForm').addEventListener('submit',async e=>{
  e.preventDefault();const f=e.currentTarget,fd=new FormData(f),name=String(fd.get('name')).trim();
  const rows=[...$('components').querySelectorAll('.component')].map(r=>({kind:r.querySelector('.kind').value,id:r.querySelector('.item').value,qty:Number(r.querySelector('.qty').value),mode:r.querySelector('.mode').value}));
  if(rows.some(r=>!r.id||!(r.qty>0))){say('Vérifie chaque ligne : choisis un article de stock et une quantité supérieure à zéro.',true);return;}
- const payload={shop_id:shopId,name,category:fd.get('category'),description:String(fd.get('description')||'').trim()||null,sale_price:Number(fd.get('sale_price')),created_by:userId};
+ let mediaItems;try{mediaItems=await uploadMenuMedia(f.elements.media.files);}catch(err){say('Média non envoyé : '+err.message,true);return;}\n const payload={shop_id:shopId,name,category:fd.get('category'),description:String(fd.get('description')||'').trim()||null,sale_price:Number(fd.get('sale_price')),media_items:mediaItems,created_by:userId};
  const {data:menu,error}=await db.from('fast_food_menu_items').insert(payload).select().single();
  if(error){say('Menu non enregistré : '+error.message,true);return;}
  const components=rows.map(r=>{const i=ingredients.find(x=>x.id===r.id);return{shop_id:shopId,menu_item_id:menu.id,ingredient_id:i.id,component_type:r.kind,component_name:i.name,quantity_per_menu:r.qty,unit:i.base_unit,service_mode:r.mode};});
