@@ -286,10 +286,10 @@ $('expenseForm').addEventListener('submit',async e=>{
   $('logoutButton').addEventListener('click',async()=>{const {error:logoutError}=await db.auth.signOut();if(logoutError){say('Déconnexion impossible : '+logoutError.message,true);return;}location.replace('connexion.html');});
   const {data:members,error:me}=await db.from('shop_members').select('shop_id,role').eq('user_id',userId);if(me)throw me;
   const roles=Array.isArray(session.user.user_metadata?.gurisha_roles)?session.user.user_metadata.gurisha_roles:[];
-  const valid=(members||[]).filter(m=>['owner','manager'].includes(m.role)||roles.includes('manager')||roles.includes('receptionist'));
-  if(!valid.length)throw new Error('Accès réservé au gestionnaire ou à la réception.');
+  const valid=(members||[]).filter(m=>['admin','owner','manager'].includes(m.role)||roles.includes('admin')||roles.includes('owner')||roles.includes('manager')||roles.includes('receptionist'));
+  if(!valid.length)throw new Error('Accès réservé à l’administrateur, au propriétaire, au gestionnaire ou à la réception.');
   const key='gurisha_active_shop_'+userId,saved=localStorage.getItem(key),selected=valid.find(m=>m.shop_id===saved)||valid[0];shopId=selected.shop_id;
-  canManageStaff=['owner','manager'].includes(selected.role)||roles.includes('manager');canManageFinance=canManageStaff;
+  canManageStaff=['admin','owner','manager'].includes(selected.role)||roles.includes('admin')||roles.includes('owner')||roles.includes('manager');canManageFinance=canManageStaff;
   if(!canManageStaff){['catalogue','equipes','depenses','stock'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');showTab('rendezvous');}
   const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=shop?.name||'Mon salon';
   const {data:cfg,error:ce}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(ce)throw ce;
