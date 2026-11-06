@@ -6,6 +6,7 @@
 </style></head><body><header style="position:relative"><button class="profile-btn" id="profileButton" type="button" aria-label="Mon profil" title="Mon profil">👤</button><h1>GURISHA</h1><p>Gestion du salon, des prestations et des rendez-vous</p></header><main>
 <div class="top"><div><h2 style="margin:0;color:var(--gd)">Espace salon</h2><small id="shopLabel" class="muted">Chargement…</small></div><div class="actions" style="margin:0"><button class="green" type="button" id="quickSettings">⚙ Paramètres</button><button class="light" onclick="location.href='index.html'">← Retour</button></div></div>
 <div id="notice" class="notice hidden" role="status"></div>
+<button id="salonSettingsShortcut" class="green" type="button" style="display:block;width:100%;margin:0 0 12px;padding:14px;font-size:15px">⚙ OUVRIR LES PARAMÈTRES DU SALON</button>
 <nav class="tabs" aria-label="Sections du salon">
 <button data-tab="parametres">⚙ Paramètres</button><button class="active" data-tab="catalogue">Catalogue</button><button data-tab="equipes">Équipes</button><button data-tab="rendezvous">Rendez-vous & devis</button><button data-tab="stock">Matériaux & stock</button><button data-tab="transport">Taxis</button><button data-tab="depenses">Dépenses</button>
 </nav>
@@ -104,6 +105,7 @@ function showTab(name){document.querySelectorAll('.tab-panel').forEach(x=>x.clas
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 $('quickSettings').addEventListener('click',()=>showTab('parametres'));
 $('floatingSettings').addEventListener('click',()=>showTab('parametres'));
+$('salonSettingsShortcut').addEventListener('click',()=>showTab('parametres'));
 function mediaMarkup(items){return (items||[]).map(m=>m.kind==='video'?'<video controls playsinline src="'+esc(m.url)+'"></video>':'<img src="'+esc(m.url)+'" alt="Média de la prestation">').join('');}
 async function uploadMedia(files,folder){
  const items=[];
