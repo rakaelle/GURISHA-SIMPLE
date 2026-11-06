@@ -161,6 +161,7 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     if(membershipError || !membership) throw new Error('Profil de boutique introuvable.');
     window.GURISHA_ROLE=membership.role;
     if(membership.role==='owner') document.getElementById('adminLink').hidden=false;
+    else { document.getElementById('salesTabButton').hidden=true; document.getElementById('purchasesTabButton').hidden=true; }
     if(membership.role==='cashier'){
       document.getElementById('addCategoryButton').hidden=true;
       document.getElementById('exportButton').hidden=true;
