@@ -87,10 +87,15 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 </div></div>
 
 <div class="modal" id="categoryModal"><div class="panel">
-<h2>Ajouter une catégorie</h2><form id="categoryForm">
+<h2>Gérer les catégories</h2>
+<div id="categoryList" class="category-list"></div>
+<hr>
+<h3 id="categoryFormTitle">Ajouter une catégorie</h3><form id="categoryForm">
 <div class="field"><label>Nom de la catégorie</label><input id="categoryName" required placeholder="Ex. Boissons"></div>
-<div class="buttons"><button type="button" class="gray" onclick="closeModal('categoryModal')">Annuler</button><button class="green">Ajouter</button></div>
-</form></div></div>
+<div class="buttons"><button type="button" class="gray" onclick="resetCategoryForm()">Annuler</button><button class="green" id="categorySubmit">Ajouter</button></div>
+</form>
+<div class="buttons"><button type="button" class="gray" onclick="closeModal('categoryModal')">Fermer</button></div>
+</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
@@ -237,8 +242,57 @@ if(editingId!==null){const p=products.find(x=>x.id===editingId);Object.assign(p,
 save();render();closeModal('productModal');
 });
 function deleteProduct(id){if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut supprimer un article.');return;}const p=products.find(x=>x.id===id);if(p&&confirm('Supprimer définitivement '+p.name+' ?')){products=products.filter(x=>x.id!==id);save();render();}}
-function openCategory(){document.getElementById('categoryForm').reset();openModal('categoryModal');}
-document.getElementById('categoryForm').addEventListener('submit',e=>{e.preventDefault();if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut ajouter une catégorie.');return;}const c=document.getElementById('categoryName').value.trim();if(!c)return;if(categories.some(x=>x.toLowerCase()===c.toLowerCase())){alert('Cette catégorie existe déjà.');return;}categories.push(c);save();fillCategories();render();closeModal('categoryModal');});
+let categoryEditingOriginal=null;
+function renderCategoryList(){
+  const root=document.getElementById('categoryList');
+  if(!root)return;
+  root.innerHTML=categories.map(c=>'<div class="category-row"><b>'+esc(c)+'</b><div class="actions"><button type="button" class="light" onclick="editCategory(\''+esc(c).replace(/\\/g,'\\\\').replace(/'/g,"\\\\'")+'\')">Modifier</button><button type="button" class="red" onclick="deleteCategory(\''+esc(c).replace(/\\/g,'\\\\').replace(/'/g,"\\\\'")+'\')">Supprimer</button></div></div>').join('')||'<p class="muted">Aucune catégorie.</p>';
+}
+function resetCategoryForm(){
+  categoryEditingOriginal=null;
+  document.getElementById('categoryForm').reset();
+  document.getElementById('categoryFormTitle').textContent='Ajouter une catégorie';
+  document.getElementById('categorySubmit').textContent='Ajouter';
+}
+function openCategory(){
+  if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut gérer les catégories.');return;}
+  resetCategoryForm();renderCategoryList();openModal('categoryModal');
+}
+function editCategory(name){
+  if(isCashier())return;
+  categoryEditingOriginal=name;
+  document.getElementById('categoryName').value=name;
+  document.getElementById('categoryFormTitle').textContent='Modifier la catégorie';
+  document.getElementById('categorySubmit').textContent='Enregistrer';
+  document.getElementById('categoryName').focus();
+}
+function deleteCategory(name){
+  if(isCashier())return;
+  const used=products.some(p=>p.category===name);
+  if(used){alert('Cette catégorie contient encore des articles. Déplace ou supprime d’abord ces articles avant de supprimer la catégorie.');return;}
+  if(!confirm('Supprimer la catégorie « '+name+' » ?'))return;
+  categories=categories.filter(c=>c!==name);
+  save();fillCategories();renderCategoryList();render();
+  if(categoryEditingOriginal===name)resetCategoryForm();
+}
+document.getElementById('categoryForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut gérer les catégories.');return;}
+  const c=document.getElementById('categoryName').value.trim();
+  if(!c)return;
+  if(categories.some(x=>x.toLowerCase()===c.toLowerCase()&&x!==categoryEditingOriginal)){alert('Cette catégorie existe déjà.');return;}
+  if(categoryEditingOriginal!==null){
+    const old=categoryEditingOriginal;
+    const index=categories.indexOf(old);
+    if(index<0){alert('Cette catégorie n’existe plus.');resetCategoryForm();renderCategoryList();return;}
+    categories[index]=c;
+    products.forEach(p=>{if(p.category===old)p.category=c;});
+  }else{
+    categories.push(c);
+  }
+  save();fillCategories();renderCategoryList();render();
+  resetCategoryForm();
+});
 function openSale(id){const p=products.find(x=>x.id===id);if(!p)return;saleId=id;document.getElementById('saleInfo').textContent=p.name+' — stock disponible : '+stock(p);document.getElementById('saleQty').value='';document.getElementById('saleQty').max=stock(p);document.getElementById('salePrice').value=p.sellPrice;calcSale();openModal('saleModal');}
 function calcSale(){document.getElementById('saleTotal').value=money(Number(document.getElementById('saleQty').value)*Number(document.getElementById('salePrice').value));}
 document.getElementById('saleQty').addEventListener('input',calcSale);document.getElementById('salePrice').addEventListener('input',calcSale);
