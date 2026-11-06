@@ -329,6 +329,45 @@ grant select,insert,update,delete on public.salon_appointment_staff to authentic
 grant select,insert,update,delete on public.salon_transport_bookings to authenticated;
 grant select,insert,update,delete on public.salon_expenses to authenticated;
 
+-- Un employé affecté à un rendez-vous peut uniquement signaler le début
+-- ou la fin de sa prestation, sans modifier le devis ni les données financières.
+create or replace function public.gurisha_salon_update_appointment_status(
+  p_appointment_id uuid,
+  p_status text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $
+declare
+  v_current text;
+begin
+  if p_status not in ('in_progress','completed') then
+    raise exception 'Statut non autorisé.';
+  end if;
+  if not public.gurisha_is_salon_appointment_staff(p_appointment_id) then
+    raise exception 'Vous ne faites pas partie de cette équipe.';
+  end if;
+  select appointment_status into v_current
+    from public.salon_appointments
+   where id = p_appointment_id
+   for update;
+  if not found then raise exception 'Rendez-vous introuvable.'; end if;
+  if p_status = 'in_progress' and v_current <> 'confirmed' then
+    raise exception 'Le rendez-vous doit être confirmé avant de commencer.';
+  end if;
+  if p_status = 'completed' and v_current <> 'in_progress' then
+    raise exception 'La prestation doit être en cours avant de la terminer.';
+  end if;
+  update public.salon_appointments
+     set appointment_status = p_status, updated_at = now()
+   where id = p_appointment_id;
+end;
+$;
+revoke all on function public.gurisha_salon_update_appointment_status(uuid,text) from public, anon;
+grant execute on function public.gurisha_salon_update_appointment_status(uuid,text) to authenticated;
+
 -- Stocker les photos et vidéos des catalogues dans un bucket public dédié.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
