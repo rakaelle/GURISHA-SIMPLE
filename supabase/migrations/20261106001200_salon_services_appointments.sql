@@ -202,7 +202,7 @@ create or replace function public.gurisha_is_salon_team_member(p_team_id uuid)
 returns boolean
 language sql stable security definer
 set search_path = public
-as $
+as $$
   select exists (
     select 1
       from public.salon_team_members tm
@@ -211,7 +211,7 @@ as $
        and sp.user_id = auth.uid()
        and sp.is_active = true
   );
-$;
+$$;
 
 -- Les responsables et les employés beauté/réception peuvent voir les noms
 -- de leurs collègues afin de constituer les équipes et consulter les affectations.
@@ -340,7 +340,7 @@ returns void
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
   v_current text;
 begin
@@ -365,7 +365,7 @@ begin
      set appointment_status = p_status, updated_at = now()
    where id = p_appointment_id;
 end;
-$;
+$$;
 revoke all on function public.gurisha_salon_update_appointment_status(uuid,text) from public, anon;
 grant execute on function public.gurisha_salon_update_appointment_status(uuid,text) to authenticated;
 
