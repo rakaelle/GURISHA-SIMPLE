@@ -7,7 +7,11 @@
 .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 18px 50px #174d2a12}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}.tab{height:42px;background:#f0f6f2;color:var(--dark);border:1px solid var(--line);border-radius:9px;font-weight:700}.tab.active{background:var(--green);color:#fff;border-color:var(--green)}h2{font-size:21px;margin:0 0 7px}.intro{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 20px}
 .field{margin-bottom:15px}label{display:block;font-size:13px;font-weight:700;margin:0 0 8px}input{width:100%;height:47px;border:1px solid var(--line);border-radius:10px;padding:0 13px;font-size:15px;outline:none}input:focus{border-color:var(--green);box-shadow:0 0 0 3px #19875418}
 .submit{width:100%;height:49px;border:0;border-radius:10px;background:var(--green);color:white;font-size:15px;font-weight:700;cursor:pointer}.submit:disabled{opacity:.65;cursor:wait}.status{display:none;margin-top:14px;padding:12px;border-radius:9px;font-size:13px;line-height:1.5}.status.show{display:block}.status.ok{background:#e8f5ed;color:#126b42}.status.err{background:#fdeaea;color:#a52b35}.links{text-align:center;margin-top:17px;font-size:13px}.links a{color:var(--dark);font-weight:700;text-decoration:none}.foot{text-align:center;color:#829087;font-size:11px;margin-top:20px}.hidden{display:none}
-</style></head><body><div class="wrap">
+</style>
+<meta name="theme-color" content="#198754">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/gurisha-icon.svg" type="image/svg+xml">
+</head><body><div class="wrap">
 <div class="brand"><div class="logo">G</div><h1>GURISHA</h1><p>Gestion simple de votre boutique</p></div>
 <main class="card"><div class="tabs"><button class="tab active" id="ownerTab" type="button">Propriétaire</button><button class="tab" id="staffTab" type="button">Employé</button></div>
 <section id="ownerPanel"><h2>Connexion du propriétaire</h2><p class="intro">Utilisez votre adresse e-mail et votre mot de passe.</p>
@@ -25,4 +29,12 @@ function getClient(){if(!window.supabase||!window.GURISHA_SUPABASE_URL||!window.
 const params=new URLSearchParams(location.search);if(params.get('confirmed')==='1')showStatus('Adresse e-mail confirmée. Connectez-vous pour terminer la création de votre boutique.','ok');
 document.getElementById('ownerForm').addEventListener('submit',async e=>{e.preventDefault();const btn=document.getElementById('ownerBtn');btn.disabled=true;btn.textContent='Connexion…';try{const client=getClient();const {data,error}=await client.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});if(error)throw error;const user=data.user;const {data:membership,error:memberError}=await client.from('shop_members').select('shop_id,role').eq('user_id',user.id).maybeSingle();if(memberError)throw memberError;if(!membership){const shopName=user.user_metadata&&user.user_metadata.shop_name;if(!shopName)throw new Error('Aucune boutique associée à ce compte. Contactez l’administrateur.');const {error:shopError}=await client.rpc('create_shop_for_current_user',{p_name:shopName});if(shopError)throw shopError;}showStatus('Connexion réussie. Ouverture de GURISHA…','ok');setTimeout(()=>location.href='index.html',700);}catch(err){showStatus('Connexion impossible : '+(err.message||'vérifiez vos identifiants.'),'err');}finally{btn.disabled=false;btn.textContent='Se connecter';}});
 document.getElementById('staffForm').addEventListener('submit',async e=>{e.preventDefault();const btn=document.getElementById('staffBtn');btn.disabled=true;btn.textContent='Vérification…';try{const client=getClient();const {data,error}=await client.functions.invoke('gurisha-staff',{body:{action:'login',shop_code:document.getElementById('shopCode').value.trim().toUpperCase(),name:document.getElementById('staffName').value.trim(),pin:document.getElementById('staffPin').value}});if(error)throw new Error(error.message||'Erreur de communication avec le serveur.');if(!data||data.error)throw new Error(data&&data.error?data.error:'Connexion impossible.');const {error:sessionError}=await client.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});if(sessionError)throw sessionError;showStatus('Connexion réussie. Ouverture de GURISHA…','ok');setTimeout(()=>location.href='index.html',700);}catch(err){showStatus('Connexion employé impossible : '+(err.message||'vérifiez vos informations.'),'err');}finally{btn.disabled=false;btn.textContent='Se connecter';}});
-</script></body></html>
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(error => console.warn("GURISHA offline setup:", error));
+  });
+}
+</script>
+</body></html>
