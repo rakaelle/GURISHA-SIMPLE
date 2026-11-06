@@ -279,6 +279,9 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     document.getElementById('constructionMaterialsButton').hidden=!hasConstruction;
     document.querySelector('.cards').hidden=!(hasCommerce||hasPos);
     document.getElementById('search').hidden=!(hasCommerce||hasPos);
+    const staffRoles=window.GURISHA_ROLES||[membership.role];
+    const salonActivity=(window.GURISHA_ACTIVITY_TYPES||[]).includes('salon');
+    if(salonActivity&&staffRoles.some(r=>['hairdresser','beautician'].includes(r))&&!staffRoles.some(r=>['manager','cashier'].includes(r))){location.replace('salon-employe.html');return;}
     if(!hasCommerce&&!hasPos){
       if(hasConstruction){location.replace('construction-materials.html');return;}
       if(hasFastFood){const roles=window.GURISHA_ROLES||[membership.role];if(roles.includes('preparer')&&!roles.some(r=>['cashier','manager'].includes(r))){location.replace('preparateur.html');return;}if(roles.includes('cashier')&&!roles.includes('manager')){location.replace('fast-food-caisse.html');return;}location.replace('fast-food-menu.html');return;}
@@ -387,7 +390,7 @@ categories.forEach(cat=>{
 const list=visible.filter(p=>p.category===cat);if(!list.length)return;
 const section=document.createElement('section');section.className='group';
 const sum=list.reduce((a,p)=>a+Number(p.salesTotal||0),0),qty=list.reduce((a,p)=>a+stock(p),0);
-let rows=list.map(p=>'<tr><td><b>'+esc(p.name)+'</b><span class="sub">'+esc(p.format||'')+(p.container?' • '+esc(p.container):'')+'</span></td>'+
+let rows=list.map(p=>'<tr><td><b>'+esc(p.name)+'</b>'+(p.media_items?.[0]?.kind==='image'?'<img src="'+esc(p.media_items[0].url)+'" alt="" style="display:block;width:48px;height:42px;object-fit:cover;border-radius:6px;margin-top:5px">':p.media_items?.[0]?.kind==='video'?'<video src="'+esc(p.media_items[0].url)+'" controls style="display:block;width:70px;height:42px;margin-top:5px"></video>':'')+'<span class="sub">'+esc(p.format||'')+(p.container?' • '+esc(p.container):'')+'</span></td>'+
 '<td>'+Number(p.initial||0)+'</td><td class="'+(p.lotA?'stock':'zero')+'">'+Number(p.lotA||0)+'</td><td>'+Number(p.lotB||0)+'</td>'+
 '<td class="'+(stock(p)?'stock':'zero')+'">'+stock(p)+'</td><td>'+Number(p.sold||0)+'</td>'+
 '<td>'+money(p.buyPrice)+'</td><td>'+money(p.sellPrice)+'</td><td><b>'+money(p.salesTotal)+'</b></td>'+
