@@ -19,6 +19,7 @@
 <div class="field"><label>Quantité disponible (facultatif)</label><input name="available_quantity" type="number" min="0" step="0.001" value="0"></div>
 <div class="field"><label>Suivre le stock ?</label><select name="manage_stock"><option value="false">Non — disponibilité à confirmer</option><option value="true">Oui — stock renseigné</option></select></div>
 <div class="field full"><label>Description</label><textarea name="description" placeholder="Qualité, dimensions, provenance…"></textarea></div>
+<div class="field full"><label>Photos ou vidéos du matériau</label><input name="media" type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime" multiple><small class="muted">Ajoutez des photos ou vidéos du matériau.</small></div>
 <div class="full actions"><button class="green">Enregistrer le matériau</button></div>
 </form><div class="notice">Pour le sable et le gravier vendus par camion, tu peux choisir « Camion » ou « Benne ». Le stock peut rester non suivi si le fournisseur s'approvisionne à la demande.</div>
 <div id="materialList" class="list"><div class="muted">Chargement du catalogue…</div></div>
@@ -83,7 +84,21 @@ async function loadAll(){
  renderMaterials();renderOrders();renderVehicles();refreshSelects();await loadQuotes();await loadDeliveries();
 }
 function renderMaterials(){
- $('materialList').innerHTML=materials.length?materials.map(m=>'<div class="item"><strong>'+esc(m.name)+'</strong> <span class="pill">'+esc(m.category)+'</span><small>'+esc(m.unit)+' · '+money(m.unit_price)+(m.manage_stock?' · Stock : '+m.available_quantity:' · Disponibilité à confirmer')+'</small>'+(m.description?'<small>'+esc(m.description)+'</small>':'')+'</div>').join(''):'<div class="muted">Aucun matériau enregistré pour le moment.</div>';
+ $('materialList').innerHTML=materials.length?materials.map(m=>'<div class="item"><strong>'+esc(m.name)+'</strong> <span class="pill">'+esc(m.category)+'</span><small>'+esc(m.unit)+' · '+money(m.unit_price)+(m.manage_stock?' · Stock : '+m.available_quantity:' · Disponibilité à confirmer')+'</small>'+(m.description?'<small>'+esc(m.description)+'</small>':'')+'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">'+(m.media_items||[]).map(x=>x.kind==='video'?'<video controls playsinline style="width:110px;height:85px;object-fit:cover;border-radius:8px" src="'+esc(x.url)+'"></video>':'<img style="width:110px;height:85px;object-fit:cover;border-radius:8px" src="'+esc(x.url)+'" alt="Photo du matériau">').join('')+'</div></div>').join(''):'<div class="muted">Aucun matériau enregistré pour le moment.</div>';
+}
+async function uploadMaterialMedia(files){
+ const items=[];
+ for(const file of [...files]){
+  if(file.size>50*1024*1024)throw new Error('Un fichier dépasse 50 Mo.');
+  if(!file.type.startsWith('image/')&&!file.type.startsWith('video/'))throw new Error('Format de média non autorisé.');
+  const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path=shopId+'/construction-materials/'+crypto.randomUUID()+'.'+ext;
+  const {error}=await db.storage.from('gurisha-catalog-media').upload(path,file,{contentType:file.type});
+  if(error)throw error;
+  const {data}=db.storage.from('gurisha-catalog-media').getPublicUrl(path);
+  items.push({url:data.publicUrl,kind:file.type.startsWith('video/')?'video':'image',name:file.name});
+ }
+ return items;
 }
 function renderOrders(){
  $('orderList').innerHTML=orders.length?orders.map(o=>'<div class="item"><strong>Commande '+esc(o.order_number)+'</strong> <span class="pill">'+esc(o.status)+'</span><small>'+esc(o.client_name)+' · '+esc(o.delivery_address)+' · '+money(o.total)+' · Paiement : '+esc(o.payment_status)+'</small><div class="row" style="margin-top:8px"><select data-order-status="'+o.id+'"><option value="received">Reçue</option><option value="confirmed">Confirmée</option><option value="loading">Chargement</option><option value="in_transit">En route</option><option value="delivered">Livrée</option><option value="cancelled">Annulée</option></select><button class="light" data-save-order="'+o.id+'">Mettre à jour</button></div></div>').join(''):'<div class="muted">Aucune commande pour le moment.</div>';
@@ -109,7 +124,7 @@ async function loadDeliveries(){
 function number(prefix){return prefix+'-'+Date.now().toString().slice(-7);}
 $('materialForm').addEventListener('submit',async e=>{
  e.preventDefault();if(!['owner','manager'].includes(role)){say('Seul le propriétaire ou le gestionnaire peut modifier le catalogue.',true);return;}
- const f=new FormData(e.target),payload=Object.fromEntries(f.entries());payload.shop_id=shopId;payload.created_by=userId;payload.unit_price=Number(payload.unit_price);payload.available_quantity=Number(payload.available_quantity||0);payload.manage_stock=payload.manage_stock==='true';
+ const f=new FormData(e.target),payload=Object.fromEntries(f.entries());const mediaFiles=e.target.elements.media.files;delete payload.media;try{payload.media_items=await uploadMaterialMedia(mediaFiles);}catch(err){say('Média non envoyé : '+err.message,true);return;}payload.shop_id=shopId;payload.created_by=userId;payload.unit_price=Number(payload.unit_price);payload.available_quantity=Number(payload.available_quantity||0);payload.manage_stock=payload.manage_stock==='true';
  const {error}=await db.from('construction_materials').insert(payload);if(error){say(error.message,true);return;}e.target.reset();say('Matériau ajouté au catalogue.');await loadAll();
 });
 $('orderForm').addEventListener('submit',async e=>{
