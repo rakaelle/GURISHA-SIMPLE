@@ -686,8 +686,13 @@ window.gurishaInit=async function(){
 
 <script>
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(error => console.warn("GURISHA offline setup:", error));
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
+      await registration.update();
+    } catch (error) {
+      console.warn("GURISHA offline setup:", error);
+    }
   });
 }
 </script>
