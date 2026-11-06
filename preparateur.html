@@ -74,7 +74,9 @@ function itemMarkup(item){
   else if(options&&typeof options==='object') details=Object.entries(options).map(([k,v])=>k+': '+v).join(' · ');
   else details=String(options||'');
   if(item.notes) details+=(details?' · ':'')+'Note : '+item.notes;
-  return '<div class="item"><div class="itemline"><span class="itemname">'+esc(name)+'</span><span class="qty">× '+esc(qty)+'</span></div>'+(details?'<div class="details">'+esc(details)+'</div>':'')+'</div>';
+  const packaging=Array.isArray(item.packaging)?item.packaging:[];
+  const packHtml=packaging.length?'<div class="note"><strong>À emballer / vérifier :</strong><br>'+packaging.map(p=>'• '+esc(p.name)+' × '+esc(p.quantity)+' '+esc(p.unit==='g'?'g':p.unit==='ml'?'ml':'pièce(s)')).join('<br>')+'</div>':'';
+  return '<div class="item"><div class="itemline"><span class="itemname">'+esc(name)+'</span><span class="qty">× '+esc(qty)+'</span></div>'+(details?'<div class="details">'+esc(details)+'</div>':'')+packHtml+'</div>';
 }
 function render(orders){
   if(!orders.length){ordersBox.innerHTML='<div class="empty"><strong>Aucune commande en attente</strong>Les nouvelles commandes apparaîtront ici automatiquement.</div>';return;}
