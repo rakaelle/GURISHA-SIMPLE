@@ -33,7 +33,7 @@ $('service').addEventListener('change',()=>{renderCart();loadMenus().catch(e=>sa
 $('send').addEventListener('click',async()=>{
  if(!cart.length){say('Ajoute au moins un plat.',true);return;}
  const mode=$('service').value;
- const items=cart.map(x=>({menu_item_id:x.menu_item_id,name:x.name,quantity:x.quantity,unit_price:x.unit_price,service_mode:mode,packaging:x.packaging.filter(p=>p.service_mode==='all'||p.service_mode===mode).map(p=>({name:p.component_name,quantity:Number(p.quantity_per_menu),unit:p.unit}))}));
+ const items=cart.map(x=>({menu_item_id:x.menu_item_id,name:x.name,quantity:x.quantity,service_mode:mode,packaging:x.packaging.filter(p=>p.service_mode==='all'||p.service_mode===mode).map(p=>({name:p.component_name,quantity:Number(p.quantity_per_menu),unit:p.unit}))}));
  const order_number='FF-'+new Date().toISOString().replace(/[-:TZ.]/g,'').slice(2,14);
  const payload={shop_id:shopId,order_number,items,notes:$('notes').value.trim()||null,status:'received',payment_status:$('payment').value,created_by:userId};
  const {error}=await db.from('fast_food_orders').insert(payload);if(error){say('Commande non envoyée : '+error.message,true);return;}
