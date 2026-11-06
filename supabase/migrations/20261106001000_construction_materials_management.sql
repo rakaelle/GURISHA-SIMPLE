@@ -123,9 +123,16 @@ using(exists(select 1 from public.shop_members sm where sm.shop_id=construction_
 with check(exists(select 1 from public.shop_members sm where sm.shop_id=construction_material_orders.shop_id and sm.user_id=auth.uid() and sm.role in ('owner','manager','cashier')));
 
 drop policy if exists construction_quotes_manage on public.construction_material_quotes;
-create policy construction_quotes_manage on public.construction_material_quotes for all to authenticated
-using(exists(select 1 from public.shop_members sm where sm.shop_id=construction_material_quotes.shop_id and sm.user_id=auth.uid() and sm.role in ('owner','manager')))
+drop policy if exists construction_quotes_insert on public.construction_material_quotes;
+drop policy if exists construction_quotes_update on public.construction_material_quotes;
+drop policy if exists construction_quotes_delete on public.construction_material_quotes;
+create policy construction_quotes_insert on public.construction_material_quotes for insert to authenticated
 with check(created_by=auth.uid() and exists(select 1 from public.shop_members sm where sm.shop_id=construction_material_quotes.shop_id and sm.user_id=auth.uid() and sm.role in ('owner','manager')));
+create policy construction_quotes_update on public.construction_material_quotes for update to authenticated
+using(exists(select 1 from public.shop_members sm where sm.shop_id=construction_material_quotes.shop_id and sm.user_id=auth.uid() and sm.role in ('owner','manager')))
+with check(exists(select 1 from public.shop_members sm where sm.shop_id=construction_material_quotes.shop_id and sm.user_id=auth.uid() and sm.role in ('owner','manager')));
+create policy construction_quotes_delete on public.construction_material_quotes for delete to authenticated
+using(exists(select 1 from public.shop_members sm where sm.shop_id=construction_material_quotes.shop_id and sm.user_id=auth.uid() and sm.role in ('owner','manager')));
 
 drop policy if exists construction_vehicles_manage on public.construction_material_vehicles;
 create policy construction_vehicles_manage on public.construction_material_vehicles for all to authenticated
