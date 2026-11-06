@@ -40,6 +40,7 @@ as $$
        and sm.user_id = auth.uid()
        and (
          sm.role in ('owner','manager','gestionnaire')
+         or sm.role = any(coalesce(p_roles, array[]::text[]))
          or (
            coalesce(auth.jwt()->'user_metadata'->'gurisha_roles', '[]'::jsonb)
            ?| coalesce(p_roles, array[]::text[])
@@ -387,7 +388,7 @@ create policy gurisha_catalog_media_upload on storage.objects
 for insert to authenticated
 with check (
   bucket_id = 'gurisha-catalog-media'
-  and public.gurisha_has_shop_access((storage.foldername(name))[1]::uuid, array[]::text[])
+  and public.gurisha_has_shop_access((storage.foldername(name))[1]::uuid, array['cashier']::text[])
 );
 drop policy if exists gurisha_catalog_media_update on storage.objects;
 create policy gurisha_catalog_media_update on storage.objects
