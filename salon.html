@@ -150,7 +150,7 @@ $('teamForm').addEventListener('submit',async e=>{
  if(!selected.length){say('Sélectionnez au moins un membre pour cette équipe.',true);return;}
  const {data:team,error}=await db.from('salon_teams').insert({shop_id:shopId,team_name:String(fd.get('team_name')).trim(),team_leader_id:fd.get('team_leader_id')||null}).select().single();
  if(error){say(error.message,true);return;}
- const rows=selected.map(id=>({shop_id:shopId,team_id:team.id,staff_profile_id:id,team_function:id===fd.get('team_leader_id')?'Chef d’équipe':'Tresseuse'}));
+ const leaderId=fd.get('team_leader_id');if(leaderId&&!selected.includes(leaderId))selected.push(leaderId);const rows=selected.map(id=>({shop_id:shopId,team_id:team.id,staff_profile_id:id,team_function:id===leaderId?'Chef d’équipe':'Tresseuse'}));
  const result=await db.from('salon_team_members').insert(rows);
  if(result.error){await db.from('salon_teams').delete().eq('id',team.id);say(result.error.message,true);return;}
  f.reset();say('Équipe créée.');await loadAll();fillStaff();
@@ -195,11 +195,10 @@ $('expenseForm').addEventListener('submit',async e=>{
   const {data:members,error:me}=await db.from('shop_members').select('shop_id,role').eq('user_id',userId);if(me)throw me;
   const roles=Array.isArray(session.user.user_metadata?.gurisha_roles)?session.user.user_metadata.gurisha_roles:[];
   const valid=(members||[]).filter(m=>['owner','manager'].includes(m.role)||roles.includes('manager')||roles.includes('receptionist'));
-  canManageStaff=(members||[]).some(m=>['owner','manager'].includes(m.role))||roles.includes('manager');
-  canManageFinance=canManageStaff;
-  if(!canManageStaff){['catalogue','equipes','depenses'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');showTab('rendezvous');}
   if(!valid.length)throw new Error('Accès réservé au gestionnaire ou à la réception.');
   const key='gurisha_active_shop_'+userId,saved=localStorage.getItem(key),selected=valid.find(m=>m.shop_id===saved)||valid[0];shopId=selected.shop_id;
+  canManageStaff=['owner','manager'].includes(selected.role)||roles.includes('manager');canManageFinance=canManageStaff;
+  if(!canManageStaff){['catalogue','equipes','depenses'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');showTab('rendezvous');}
   const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=shop?.name||'Mon salon';
   const {data:cfg,error:ce}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(ce)throw ce;
   if(!(cfg.enabled_modules||[]).some(x=>['appointments','service_management'].includes(x)))throw new Error('Activez les modules Rendez-vous ou Catalogue de prestations dans les paramètres de cette boutique.');
