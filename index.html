@@ -231,7 +231,7 @@ openModal('productModal');}
 document.getElementById('productForm').addEventListener('submit',e=>{
 e.preventDefault();if(isCashier()&&editingId!==null){alert('Vous ne pouvez pas modifier un article existant.');return;}const v=id=>document.getElementById(id).value.trim(),n=id=>Number(document.getElementById(id).value);
 const name=v('name'),initial=isCashier()?0:n('initial'),a=isCashier()?0:n('lotA'),b=isCashier()?0:n('lotB'),buy=n('buyPrice'),sell=n('sellPrice');
-if(!name||![initial,a,b].every(x=>Number.isInteger(x)&&x>=0)||a+b>initial||![buy,sell].every(x=>Number.isFinite(x)&&x>=0)){alert('Vérifiez le nom, les quantités et les prix. Les lots A et B ne peuvent pas dépasser la quantité initiale.');return;}
+if(!name||![initial,a,b].every(x=>Number.isInteger(x)&&x>=0)||![buy,sell].every(x=>Number.isFinite(x)&&x>=0)){alert('Vérifiez le nom, les quantités et les prix. Les quantités des lots A et B doivent être des nombres entiers positifs ou nuls.');return;}
 const data={name:name,format:v('format'),container:v('container'),category:v('category'),initial:initial,lotA:a,lotB:b,buyPrice:buy,sellPrice:sell};
 if(editingId!==null){const p=products.find(x=>x.id===editingId);Object.assign(p,data);}else{products.push(Object.assign({id:Date.now(),sold:0,salesTotal:0},data));}
 save();render();closeModal('productModal');
