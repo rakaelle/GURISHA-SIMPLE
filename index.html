@@ -51,6 +51,23 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
  .pos-page-grid .pos-product{min-height:100px}
 }
 @media(min-width:761px) and (max-width:950px){.pos-layout{grid-template-columns:minmax(0,1fr)}}
+
+/* Confirmation de vente — reçu minimaliste */
+#posSuccess{display:none;margin:14px 0 12px;padding:18px;border:1px solid #cfe7d7;border-radius:15px;background:linear-gradient(145deg,#f4fbf6,#eaf6ee);color:#244b34;font-family:inherit;box-shadow:0 6px 20px rgba(28,91,53,.07)}
+#posSuccess .sale-success-head{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+#posSuccess .sale-success-icon{width:38px;height:38px;display:grid;place-items:center;flex:0 0 38px;border-radius:50%;background:#d8f0df;color:#187344;font-size:20px;font-weight:800}
+#posSuccess .sale-success-title{font-size:15px;font-weight:750;letter-spacing:-.2px;color:#195b38}
+#posSuccess .sale-success-subtitle{display:block;margin-top:3px;font-size:11px;font-weight:400;color:#6b8775}
+#posSuccess .sale-amount-main{padding:13px 14px;margin-bottom:9px;border-radius:11px;background:#fff;border:1px solid #e0eee4}
+#posSuccess .sale-amount-main span,#posSuccess .sale-detail span{display:block;font-size:11px;font-weight:600;color:#728879;margin-bottom:5px}
+#posSuccess .sale-amount-main strong{font-size:25px;line-height:1.2;letter-spacing:-.7px;color:#174d30;font-variant-numeric:tabular-nums}
+#posSuccess .sale-details{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#posSuccess .sale-detail{padding:10px 11px;background:#ffffffb8;border:1px solid #e3eee6;border-radius:10px;min-width:0}
+#posSuccess .sale-detail strong{font-size:14px;color:#315b40;font-weight:700;font-variant-numeric:tabular-nums}
+#posSuccess .sale-detail.change{background:#e0f2e5;border-color:#cce8d4}
+#posSuccess .sale-detail.change strong{color:#17683c}
+#posSuccess .sale-cancel{width:100%;margin-top:13px;padding:10px 12px;border:1px solid #f0d5d2;border-radius:9px;background:#fff7f6;color:#a34c43;font-size:12px;font-weight:700}
+#posSuccess .sale-cancel:hover{background:#ffefed}
 </style>
 </head>
 <body>
@@ -421,8 +438,8 @@ async function checkoutSale(){
  posCart={};document.getElementById("cashReceived").value="";
  try{await reloadPosData();}catch(e){console.error(e);}
  const box=document.getElementById("posSuccess");box.style.display="block";
- box.innerHTML="<b>Vente enregistrée !</b><br>Total : "+money(r.data.total)+"<br>Reçu : "+money(r.data.cash_received)+"<br>Monnaie à rendre : "+money(r.data.change_due);
- const cancel=document.createElement("button");cancel.className="red";cancel.textContent="Annuler cette vente";cancel.style.marginTop="10px";cancel.addEventListener("click",()=>cancelPosSale(r.data.sale_id));box.appendChild(document.createElement("br"));box.appendChild(cancel);
+ box.innerHTML="<div class='sale-success-head'><span class='sale-success-icon'>✓</span><div><div class='sale-success-title'>Vente enregistrée</div><small class='sale-success-subtitle'>La transaction a été effectuée avec succès</small></div></div><div class='sale-amount-main'><span>Total de la vente</span><strong>"+money(r.data.total)+"</strong></div><div class='sale-details'><div class='sale-detail'><span>Montant reçu</span><strong>"+money(r.data.cash_received)+"</strong></div><div class='sale-detail change'><span>Monnaie à rendre</span><strong>"+money(r.data.change_due)+"</strong></div></div>";
+ const cancel=document.createElement("button");cancel.className="sale-cancel";cancel.textContent="Annuler cette vente";cancel.addEventListener("click",()=>cancelPosSale(r.data.sale_id));box.appendChild(cancel);
  renderCaisse();
 }
 async function cancelPosSale(id){
