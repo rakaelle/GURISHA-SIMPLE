@@ -96,6 +96,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <script src="supabase-config.js"></script>
 <script>
 const authClient = window.supabase.createClient(window.GURISHA_SUPABASE_URL, window.GURISHA_SUPABASE_KEY);
+window.GURISHA_SUPABASE_CLIENT = authClient;
 (async function verifySignedInUser(){
   try {
     const {data:{session},error} = await authClient.auth.getSession();
@@ -118,7 +119,7 @@ const authClient = window.supabase.createClient(window.GURISHA_SUPABASE_URL, win
       document.getElementById('initialField').hidden=true;
       document.getElementById('initialLotsFields').hidden=true;
     }
-    if(typeof window.gurishaInit==='function') window.gurishaInit();
+    if(typeof window.gurishaInit==='function') await window.gurishaInit();
     document.body.style.visibility='visible';
   } catch(err) {
     console.error(err);
@@ -138,7 +139,23 @@ const defaultProducts=[
 ];
 let categories=defaultCategories.slice(),products=defaultProducts.slice(),editingId=null,saleId=null,lotId=null;
 function isCashier(){return window.GURISHA_ROLE==='cashier';}
-function save(){localStorage.setItem(KEY,JSON.stringify({categories:categories,products:products}));}
+let syncReady=false;
+let syncQueue=Promise.resolve();
+function save(){
+  const payload={categories:categories,products:products};
+  localStorage.setItem(KEY,JSON.stringify(payload));
+  if(syncReady){
+    syncQueue=syncQueue.then(async()=>{
+      const {error}=await window.GURISHA_SUPABASE_CLIENT.rpc('gurisha_save_data',{p_payload:payload});
+      if(error){
+        console.error('Erreur de synchronisation GURISHA:',error);
+        document.querySelector('footer').textContent='GURISHA SIMPLE — Erreur de synchronisation. Vérifiez la connexion.';
+      }else{
+        document.querySelector('footer').textContent='GURISHA SIMPLE — Données synchronisées avec la boutique.';
+      }
+    }).catch(error=>console.error('Synchronisation impossible:',error));
+  }
+}
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x){if(Array.isArray(x.categories))categories=x.categories;if(Array.isArray(x.products))products=x.products;}}catch(e){console.error(e);}
 products.forEach(p=>{if(p.buyPrice===undefined)p.buyPrice=0;if(p.salesTotal===undefined)p.salesTotal=0;if(p.sold===undefined)p.sold=0;if(p.lotA===undefined)p.lotA=0;if(p.lotB===undefined)p.lotB=0;});}
 function money(n){return (Number(n)||0).toLocaleString('fr-FR')+' FBu';}
@@ -192,7 +209,33 @@ let remaining=q,fromA=Math.min(Number(p.lotA||0),remaining);p.lotA-=fromA;remain
 function openLot(id){const p=products.find(x=>x.id===id);if(!p)return;lotId=id;document.getElementById('lotInfo').textContent=p.name+' — Lot A : '+p.lotA+' | Lot B : '+p.lotB;document.getElementById('lotQty').value='';openModal('lotModal');}
 document.getElementById('lotForm').addEventListener('submit',e=>{e.preventDefault();const p=products.find(x=>x.id===lotId),q=Number(document.getElementById('lotQty').value);if(!p)return;if(!Number.isInteger(q)||q<1){alert('Saisissez une quantité positive.');return;}p.lotB=Number(p.lotB||0)+q;save();render();closeModal('lotModal');});
 function exportCSV(){const data=[['Catégorie','Article','Format','Contenant','Quantité initiale','Lot A','Lot B','Stock total','Quantité vendue','Prix achat unitaire','Prix vente unitaire','Total ventes']];products.forEach(p=>data.push([p.category,p.name,p.format||'',p.container||'',p.initial||0,p.lotA||0,p.lotB||0,stock(p),p.sold||0,p.buyPrice||0,p.sellPrice||0,p.salesTotal||0]));const csv='\uFEFF'+data.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='GURISHA_STOCK.csv';a.click();URL.revokeObjectURL(url);}
-window.gurishaInit=function(){load();fillCategories();render();};
+window.gurishaInit=async function(){
+  load();
+  const {data:remoteData,error}=await window.GURISHA_SUPABASE_CLIENT.rpc('gurisha_get_data');
+  if(error) throw error;
+  if(remoteData && Array.isArray(remoteData.categories) && Array.isArray(remoteData.products)){
+    categories=remoteData.categories;
+    products=remoteData.products;
+    products.forEach(p=>{
+      if(p.buyPrice===undefined)p.buyPrice=0;
+      if(p.salesTotal===undefined)p.salesTotal=0;
+      if(p.sold===undefined)p.sold=0;
+      if(p.lotA===undefined)p.lotA=0;
+      if(p.lotB===undefined)p.lotB=0;
+    });
+    localStorage.setItem(KEY,JSON.stringify({categories:categories,products:products}));
+  }else{
+    if(window.GURISHA_ROLE!=='owner'){
+      throw new Error('La boutique doit être initialisée par le propriétaire avant la connexion des employés.');
+    }
+    syncReady=true;
+    save();
+  }
+  syncReady=true;
+  fillCategories();
+  render();
+  document.querySelector('footer').textContent='GURISHA SIMPLE — Données synchronisées avec la boutique.';
+};
 </script>
 </body>
 </html>
