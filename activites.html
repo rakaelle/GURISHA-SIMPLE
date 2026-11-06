@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#198754"><title>GURISHA — Activités de la boutique</title>
+<style>
+:root{--g:#198754;--gd:#126b42;--gl:#e8f5ed;--bg:#f4f8f5;--bd:#dce7df;--tx:#26372d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Arial,sans-serif}header{background:var(--g);color:#fff;text-align:center;padding:17px}header h1{margin:0;letter-spacing:2px}main{max-width:900px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;margin:4px 0 14px}button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:pointer}.green{background:var(--g);color:#fff}.light{background:var(--gl);color:var(--gd)}.panel{background:#fff;border:1px solid var(--bd);border-radius:13px;padding:15px;margin-bottom:13px}.notice{background:var(--gl);color:var(--gd);padding:11px;border-radius:9px;font-size:12px;line-height:1.5;margin:10px 0}.error{background:#fdebed;color:#a52b35}.muted{color:#718078;font-size:12px;line-height:1.5}.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.choice{display:flex;align-items:flex-start;gap:9px;border:1px solid var(--bd);border-radius:10px;padding:12px;background:#fbfdfb;min-height:55px}.choice input{width:18px;height:18px;accent-color:var(--g);margin:1px 0 0}.choice strong{display:block;font-size:13px}.choice small{display:block;color:#718078;font-size:11px;margin-top:3px}.section-title{margin:3px 0 7px;color:var(--gd);font-size:16px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{flex:1;min-width:130px}.status{font-size:12px;padding:9px 11px;border-radius:8px;background:#f3f8f4;color:#4d6d58;margin-top:10px}
+@media(max-width:600px){main{padding:10px}.choices{grid-template-columns:1fr}.panel{padding:12px}}
+</style></head><body><header><h1>GURISHA</h1><p>Configuration des activités de votre établissement</p></header><main>
+<div class="top"><div><h2 style="margin:0;color:var(--gd)">Activités et modules</h2><small id="shopLabel">Chargement…</small></div><button class="light" onclick="location.href='index.html'">← Retour</button></div>
+<div id="notice" class="notice" hidden></div>
+<section class="panel"><h3 class="section-title">1. Quel type d’établissement gérez-vous ?</h3><p class="muted">Vous pouvez choisir plusieurs activités si votre établissement combine différents services.</p><div class="choices" id="activities">
+<label class="choice"><input type="checkbox" value="commerce"><span><strong>Commerce / boutique</strong><small>Magasin, supermarché, vêtements, cosmétiques, électronique…</small></span></label>
+<label class="choice"><input type="checkbox" value="restaurant"><span><strong>Restaurant / fast-food</strong><small>Restaurant, snack, boissons, plats à emporter…</small></span></label>
+<label class="choice"><input type="checkbox" value="bakery"><span><strong>Boulangerie / pâtisserie</strong><small>Pain, gâteaux et fabrication alimentaire</small></span></label>
+<label class="choice"><input type="checkbox" value="salon"><span><strong>Salon / beauté / bien-être</strong><small>Coiffure, esthétique, spa…</small></span></label>
+<label class="choice"><input type="checkbox" value="garage"><span><strong>Garage / mécanique</strong><small>Réparation et entretien de véhicules</small></span></label>
+<label class="choice"><input type="checkbox" value="workshop"><span><strong>Atelier / réparation</strong><small>Couture, impression, dépannage, fabrication…</small></span></label>
+<label class="choice"><input type="checkbox" value="transport"><span><strong>Transport de personnes</strong><small>Taxi, chauffeur, transfert aéroport…</small></span></label>
+<label class="choice"><input type="checkbox" value="moving"><span><strong>Déménagement</strong><small>Transport de meubles et biens</small></span></label>
+<label class="choice"><input type="checkbox" value="delivery"><span><strong>Livraison / colis</strong><small>Livraison de repas, colis et courses</small></span></label>
+<label class="choice"><input type="checkbox" value="event"><span><strong>Événementiel</strong><small>Organisation et location de matériel</small></span></label>
+<label class="choice"><input type="checkbox" value="other"><span><strong>Autre activité</strong><small>Une activité qui ne figure pas dans la liste</small></span></label>
+</div></section>
+<section class="panel"><h3 class="section-title">2. Quelles fonctionnalités souhaitez-vous activer ?</h3><p class="muted">Les modules activés seront proposés dans l'espace privé de cette boutique. Vous pourrez faire évoluer cette sélection plus tard.</p><div class="choices" id="modules">
+<label class="choice"><input type="checkbox" value="commerce"><span><strong>Gestion du stock et des achats</strong><small>Articles, fournisseurs, approvisionnement</small></span></label>
+<label class="choice"><input type="checkbox" value="pos"><span><strong>Caisse / ventes</strong><small>Encaissement et suivi des ventes</small></span></label>
+<label class="choice"><input type="checkbox" value="fast_food"><span><strong>Menus et commandes restaurant</strong><small>Menus, ingrédients, emballages, préparation</small></span></label>
+<label class="choice"><input type="checkbox" value="appointments"><span><strong>Rendez-vous</strong><small>Calendrier et réservations de clients</small></span></label>
+<label class="choice"><input type="checkbox" value="service_management"><span><strong>Gestion des prestations</strong><small>Services, devis, dossiers et interventions</small></span></label>
+<label class="choice"><input type="checkbox" value="transport"><span><strong>Gestion du transport</strong><small>Chauffeurs, véhicules et trajets</small></span></label>
+<label class="choice"><input type="checkbox" value="delivery"><span><strong>Livraisons et colis</strong><small>Courses, suivi et remise des colis</small></span></label>
+<label class="choice"><input type="checkbox" value="moving"><span><strong>Déménagement</strong><small>Demandes, équipes et missions</small></span></label>
+<label class="choice"><input type="checkbox" value="production"><span><strong>Production / fabrication</strong><small>Recettes, matières premières et fabrication</small></span></label>
+<label class="choice"><input type="checkbox" value="event_management"><span><strong>Événementiel / location</strong><small>Réservations et matériel à louer</small></span></label>
+</div><div class="notice">Important : activer un module ici enregistre votre choix. Les écrans correspondants seront ensuite adaptés progressivement. Cela ne publie pas votre établissement sur GURISHA SERVICES.</div>
+<div class="actions"><button class="green" id="save" type="button">Enregistrer mes choix</button><button class="light" type="button" onclick="location.href='index.html'">Annuler</button></div><div id="marketplace" class="status">Visibilité sur GURISHA SERVICES : non demandée.</div></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
+let db,shopId;
+const $=id=>document.getElementById(id);
+function say(t,err=false){$('notice').hidden=false;$('notice').textContent=t;$('notice').className='notice'+(err?' error':'');}
+function setChecks(root,values){root.querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=values.includes(c.value));}
+function getChecks(root){return [...root.querySelectorAll('input[type=checkbox]:checked')].map(c=>c.value);}
+async function init(){
+ try{
+  db=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
+  const {data:{session},error}=await db.auth.getSession();if(error||!session){location.replace('connexion.html');return;}
+  const {data:members,error:me}=await db.from('shop_members').select('shop_id,role').eq('user_id',session.user.id);if(me)throw me;
+  const owners=(members||[]).filter(m=>m.role==='owner');if(!owners.length)throw new Error('Seul le propriétaire peut configurer les activités de la boutique.');
+  const key='gurisha_active_shop_'+session.user.id,saved=localStorage.getItem(key),selected=owners.find(m=>m.shop_id===saved)||owners[0];shopId=selected.shop_id;
+  const {data:shop}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();$('shopLabel').textContent=shop?.name||'Ma boutique';
+  const {data:cfg,error:cfgError}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(cfgError)throw cfgError;
+  setChecks($('activities'),(cfg.activity_types||[]).filter(x=>x!=='legacy'));
+  setChecks($('modules'),cfg.enabled_modules||[]);
+  const labels={not_requested:'non demandée',pending:'en attente de validation',approved:'approuvée',suspended:'suspendue',rejected:'refusée'};
+  $('marketplace').textContent='Visibilité sur GURISHA SERVICES : '+(labels[cfg.marketplace_status]||'non demandée')+'. Cette demande sera gérée séparément.';
+ }catch(err){say(err.message||'Impossible de charger la configuration.',true);$('save').disabled=true;}
+}
+$('save').addEventListener('click',async()=>{
+ const activities=getChecks($('activities')),modules=getChecks($('modules'));
+ if(!activities.length){say('Choisissez au moins un type d’activité.',true);return;}
+ if(!modules.length){say('Choisissez au moins un module.',true);return;}
+ const btn=$('save');btn.disabled=true;btn.textContent='Enregistrement…';
+ const {error}=await db.rpc('gurisha_save_shop_modules',{p_shop_id:shopId,p_activity_types:activities,p_enabled_modules:modules});
+ btn.disabled=false;btn.textContent='Enregistrer mes choix';
+ if(error){say('Enregistrement impossible : '+error.message,true);return;}
+ say('Vos activités et modules ont été enregistrés.');
+});
+init();
+</script></body></html>
