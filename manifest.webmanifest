@@ -1,0 +1,26 @@
+{
+  "name": "GURISHA SIMPLE",
+  "short_name": "GURISHA",
+  "description": "Gestion des stocks, achats et ventes",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f8f5",
+  "theme_color": "#198754",
+  "icons": [
+    {
+      "src": "/icons/gurisha-icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/gurisha-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
