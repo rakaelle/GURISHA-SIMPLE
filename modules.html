@@ -6,7 +6,7 @@
 @media(max-width:600px){main{padding:10px}.grid{grid-template-columns:1fr 1fr}.module{padding:12px;min-height:190px}.module h3{font-size:14px}.module p{font-size:11px}}
 @media(max-width:390px){.grid{grid-template-columns:1fr}}
 </style></head><body><header><h1>GURISHA</h1><p>Votre espace de gestion professionnel</p></header><main>
-<div class="top"><div><h2 style="margin:0;color:var(--gd)">Mes modules</h2><small id="shopLabel" class="muted">Chargement…</small></div><button class="light" onclick="location.href='index.html'">← Accueil</button></div>
+<div class="top"><div><h2 style="margin:0;color:var(--gd)">Mes modules</h2><small id="shopLabel" class="muted">Chargement…</small><div id="shopSwitchWrap" style="margin-top:8px" hidden><label for="shopSwitch" class="muted">Changer de boutique : </label><select id="shopSwitch" style="padding:9px;border:1px solid var(--bd);border-radius:8px;max-width:100%"></select></div></div><button class="light" onclick="location.href='index.html'">← Accueil</button></div>
 <div id="notice" class="notice" hidden></div><h3 class="section">Fonctionnalités activées</h3><div id="moduleGrid" class="grid"><div class="empty">Chargement de vos modules…</div></div>
 <p class="muted" style="margin-top:18px">Les modules affichés dépendent des options activées pour cet établissement. Les fonctions encore en construction seront ajoutées progressivement sans toucher aux données des autres activités.</p>
 </main>
@@ -34,6 +34,17 @@ const definitions={
   const activeKey='gurisha_active_shop_'+session.user.id;
   let shopId=localStorage.getItem(activeKey);if(!members.some(m=>m.shop_id===shopId))shopId=members[0].shop_id;
   const member=members.find(m=>m.shop_id===shopId);
+  if(member.role==='owner'){
+   const {data:ownedShops,error:shopsError}=await db.from('shops').select('id,name').order('created_at');
+   if(shopsError)throw shopsError;
+   const own=(ownedShops||[]).filter(s=>members.some(m=>m.shop_id===s.id&&m.role==='owner'));
+   if(own.length>1){
+    $('shopSwitchWrap').hidden=false;
+    $('shopSwitch').innerHTML=own.map(s=>'<option value="'+s.id+'">'+String(s.name||'Boutique').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))+'</option>').join('');
+    $('shopSwitch').value=shopId;
+    $('shopSwitch').addEventListener('change',()=>{localStorage.setItem(activeKey,$('shopSwitch').value);location.reload();});
+   }
+  }
   let shopName='Mon établissement';
   if(member.role==='owner'){const {data:s,error:se}=await db.from('shops').select('id,name').eq('id',shopId).maybeSingle();if(se)throw se;if(s&&s.name)shopName=s.name;}
   $('shopLabel').textContent=shopName;
