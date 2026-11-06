@@ -161,7 +161,8 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     if(membershipError || !membership) throw new Error('Profil de boutique introuvable.');
     window.GURISHA_ROLE=membership.role;
     if(membership.role==='owner') document.getElementById('adminLink').hidden=false;
-    else { document.getElementById('salesTabButton').hidden=true; document.getElementById('purchasesTabButton').hidden=true; }
+    const canViewHistory=['owner','manager','gestionnaire'].includes(membership.role);
+    if(!canViewHistory){ document.getElementById('salesTabButton').hidden=true; document.getElementById('purchasesTabButton').hidden=true; }
     if(membership.role==='cashier'){
       document.getElementById('addCategoryButton').hidden=true;
       document.getElementById('exportButton').hidden=true;
@@ -422,7 +423,7 @@ function renderCaisse(){
  }
  document.getElementById("posTotal").textContent=money(posTotal());
  document.getElementById("checkoutButton").disabled=posBusy||!entries.length;
- document.getElementById("historyButton").style.display=window.GURISHA_ROLE==="owner"?"block":"none";
+ document.getElementById("historyButton").style.display=["owner","manager","gestionnaire"].includes(window.GURISHA_ROLE)?"block":"none";
  calculateChange();
 }
 async function reloadPosData(){const r=await window.GURISHA_SUPABASE_CLIENT.rpc("gurisha_get_data");if(r.error)throw r.error;if(r.data){categories=r.data.categories;products=r.data.products;localStorage.setItem(KEY,JSON.stringify(currentPayload()));lastRemoteSignature=JSON.stringify(currentPayload());localDirty=false;fillCategories();render();}}
@@ -449,9 +450,9 @@ async function cancelPosSale(id){
  if(r.error){alert("Annulation impossible : "+r.error.message);return;}
  document.getElementById("posSuccess").style.display="none";
  try{await reloadPosData();}catch(e){alert("Vente annulée. Rechargez la page pour actualiser le stock.");}
- if(window.GURISHA_ROLE==="owner"&&document.getElementById("salesHistory").style.display==="block")loadSalesHistory();
+ if(["owner","manager","gestionnaire"].includes(window.GURISHA_ROLE)&&document.getElementById("salesHistory").style.display==="block")loadSalesHistory();
 }
-function showHistoryTab(which){if(window.GURISHA_ROLE!=="owner"){alert("Historique réservé au propriétaire.");return;}document.getElementById("caissePanel").style.display="none";document.getElementById("inventory").style.display="none";document.getElementById("historyPanel").style.display="block";document.getElementById("salesHistory").style.display=which==="sales"?"block":"none";document.getElementById("purchasesHistory").style.display=which==="purchases"?"block":"none";if(which==="sales")loadSalesHistory();else loadPurchasesHistory();}
+function showHistoryTab(which){if(!["owner","manager","gestionnaire"].includes(window.GURISHA_ROLE)){alert("Historique réservé au propriétaire et au gestionnaire.");return;}document.getElementById("caissePanel").style.display="none";document.getElementById("inventory").style.display="none";document.getElementById("historyPanel").style.display="block";document.getElementById("salesHistory").style.display=which==="sales"?"block":"none";document.getElementById("purchasesHistory").style.display=which==="purchases"?"block":"none";if(which==="sales")loadSalesHistory();else loadPurchasesHistory();}
 function toggleSalesHistory(){showHistoryTab("sales");}
 async function loadPurchasesHistory(){const root=document.getElementById('purchasesHistory');root.textContent='Chargement...';const r=await window.GURISHA_SUPABASE_CLIENT.rpc('gurisha_list_purchases');if(r.error){root.textContent='Historique des achats indisponible : '+r.error.message;return;}root.innerHTML='<h2>Historique des achats</h2>';if(!r.data||!r.data.length){root.append('Aucun achat enregistré.');return;}const wrap=document.createElement('div');wrap.className='tablewrap';const table=document.createElement('table');table.style.minWidth='650px';table.innerHTML='<thead><tr><th>Date et heure</th><th>Article</th><th>Quantité</th><th>Prix d’achat unitaire</th><th>Montant total</th></tr></thead>';const body=document.createElement('tbody');r.data.forEach(p=>{const tr=document.createElement('tr');[new Date(p.created_at).toLocaleString('fr-FR'),p.product_name,p.quantity,money(p.unit_cost),money(p.total_cost)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});body.appendChild(tr);});table.appendChild(body);wrap.appendChild(table);root.appendChild(wrap);}
 async function loadSalesHistory(){
@@ -503,6 +504,7 @@ window.gurishaInit=async function(){
   lastRemoteSignature=JSON.stringify(currentPayload());
   fillCategories();
   render();
+  switchCaisse();
   document.querySelector('footer').textContent='GURISHA SIMPLE — Synchronisé. Actualisation automatique activée.';
   window.setInterval(refreshSharedData,4000);
 };
