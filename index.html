@@ -295,7 +295,7 @@ async function deleteAllTestProducts(){
  if(window.GURISHA_ROLE!=='owner'){alert('Cette action est réservée au propriétaire.');return;}
  if(!confirm('Réinitialiser les données de test ? Tous les articles, toutes les ventes et tous les achats de cette boutique seront supprimés définitivement. Les catégories et les comptes employés seront conservés.'))return;
  const confirmation=prompt('Pour confirmer cette opération irréversible, écrivez NETTOYER :');
- if(confirmation!=='NETTOYER'){alert('Opération annulée.');return;}
+ if(String(confirmation||'').trim().toUpperCase()!=='NETTOYER'){alert('Opération annulée. Pour confirmer, saisissez NETTOYER.');return;}
  const button=document.querySelector('.inventory-tools button');
  if(button){button.disabled=true;button.textContent='Nettoyage en cours…';}
  const r=await window.GURISHA_SUPABASE_CLIENT.rpc('gurisha_reset_test_data');
