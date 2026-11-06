@@ -81,6 +81,15 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 <h1>GURISHA</h1><p>Gestion des stocks, achats et ventes</p>
 <a class="admin-link" id="adminLink" href="administration.html" hidden>Administration</a>
 </header>
+<div id="gurishaInstallNotice" hidden style="max-width:1500px;margin:12px auto;padding:12px 15px;background:#e8f5ed;border:1px solid #cfe5d6;border-radius:12px;color:#245b3b">
+  <strong style="display:block;font-size:13px;margin-bottom:4px">Installez GURISHA sur ce téléphone</strong>
+  <span style="font-size:12px;color:#527260">Accédez plus facilement à la caisse et au stock depuis votre écran d’accueil.</span>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button id="gurishaInstallHelp" type="button" class="green">Comment installer ?</button>
+    <button id="gurishaInstallLater" type="button" class="light">Plus tard</button>
+  </div>
+</div>
+
 <main>
 <div class="cards">
 <div class="card"><small>Articles</small><strong id="nArticles">0</strong></div>
@@ -147,6 +156,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="install-notice.js"></script>
 <script>
 const authClient = window.supabase.createClient(window.GURISHA_SUPABASE_URL, window.GURISHA_SUPABASE_KEY);
 window.GURISHA_SUPABASE_CLIENT = authClient;
