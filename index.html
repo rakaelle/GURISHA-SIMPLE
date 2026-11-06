@@ -256,7 +256,7 @@ function closeModal(id){document.getElementById(id).classList.remove('show');}
 function fillCategories(){document.getElementById('category').innerHTML=categories.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');}
 function render(){
 const q=document.getElementById('search').value.toLowerCase().trim(),root=document.getElementById('inventory');root.innerHTML='';
-if(window.GURISHA_ROLE==='owner'&&products.length){const tools=document.createElement('div');tools.className='inventory-tools';tools.innerHTML='<button type="button" onclick="deleteAllTestProducts()">Supprimer tous les articles de test</button>';root.appendChild(tools);}
+if(window.GURISHA_ROLE==='owner'&&products.length){const tools=document.createElement('div');tools.className='inventory-tools';tools.innerHTML='<button type="button" onclick="deleteAllTestProducts()">Nettoyer les données de test</button>';root.appendChild(tools);}
 const visible=products.filter(p=>([p.name,p.format,p.container,p.category].join(' ').toLowerCase()).includes(q));
 categories.forEach(cat=>{
 const list=visible.filter(p=>p.category===cat);if(!list.length)return;
@@ -293,12 +293,25 @@ save();render();closeModal('productModal');
 function deleteProduct(id){if(isCashier()){alert('Seul le propriétaire ou le gestionnaire peut supprimer un article.');return;}const p=products.find(x=>x.id===id);if(p&&confirm('Supprimer définitivement '+p.name+' ?')){products=products.filter(x=>x.id!==id);save();render();}}
 async function deleteAllTestProducts(){
  if(window.GURISHA_ROLE!=='owner'){alert('Cette action est réservée au propriétaire.');return;}
- const count=products.length;if(!count){alert('Aucun article à supprimer.');return;}
- if(!confirm('Attention : '+count+' article(s) seront supprimés du stock. Les catégories et les historiques de ventes et d’achats seront conservés. Continuer ?'))return;
- const confirmation=prompt('Pour confirmer la suppression définitive, écrivez SUPPRIMER :');
- if(confirmation!=='SUPPRIMER'){alert('Suppression annulée.');return;}
- products=[];posCart={};save();render();
- alert('Les '+count+' article(s) ont été retirés du catalogue. La synchronisation avec la boutique est en cours.');
+ if(!confirm('Réinitialiser les données de test ? Tous les articles, toutes les ventes et tous les achats de cette boutique seront supprimés définitivement. Les catégories et les comptes employés seront conservés.'))return;
+ const confirmation=prompt('Pour confirmer cette opération irréversible, écrivez NETTOYER :');
+ if(confirmation!=='NETTOYER'){alert('Opération annulée.');return;}
+ const button=document.querySelector('.inventory-tools button');
+ if(button){button.disabled=true;button.textContent='Nettoyage en cours…';}
+ const r=await window.GURISHA_SUPABASE_CLIENT.rpc('gurisha_reset_test_data');
+ if(r.error){
+  if(button){button.disabled=false;button.textContent='Nettoyer les données de test';}
+  alert('Nettoyage impossible : '+r.error.message);
+  return;
+ }
+ products=[];posCart={};
+ document.getElementById('posSuccess').style.display='none';
+ document.getElementById('cashReceived').value='';
+ localStorage.setItem(KEY,JSON.stringify(currentPayload()));
+ lastRemoteSignature=JSON.stringify(currentPayload());
+ localDirty=false;
+ fillCategories();render();
+ alert('Nettoyage terminé : '+(r.data.deleted_products||0)+' article(s), '+(r.data.deleted_sales||0)+' vente(s) et '+(r.data.deleted_purchases||0)+' achat(s) supprimés. Les catégories et les comptes employés sont conservés.');
 }
 let categoryEditingOriginal=null;
 function renderCategoryList(){
