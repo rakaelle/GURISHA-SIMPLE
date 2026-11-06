@@ -306,12 +306,15 @@ $('expenseForm').addEventListener('submit',async e=>{
 
   canManageStaff=['admin','owner','manager'].includes(selected.role)||roles.includes('admin')||roles.includes('owner')||roles.includes('manager');canManageFinance=canManageStaff;
   if(!canManageStaff){['catalogue','equipes','depenses','stock'].forEach(tab=>document.querySelector('[data-tab="'+tab+'"]').classList.add('hidden'));$('serviceForm').classList.add('hidden');$('teamForm').classList.add('hidden');$('expenseForm').classList.add('hidden');showTab('rendezvous');}
-  // Le nom de boutique est facultatif pour poursuivre le chargement du salon.
+  // Reprendre le nom depuis la même liste de boutiques que « Boutique à administrer ».
+  // La boutique active reste celle sélectionnée pour cet utilisateur.
   try{
-   const {data:shop,error:shopError}=await db.from('shops').select('name').eq('id',shopId).maybeSingle();
-   if(!shopError&&shop?.name)$('shopLabel').textContent=shop.name;
-   else if(shopError)console.warn('Nom de boutique indisponible:',shopError.message);
-  }catch(shopError){console.warn('Nom de boutique indisponible:',shopError);}
+   const {data:adminShops,error:shopsError}=await db.from('shops').select('id,name').order('created_at');
+   if(shopsError)throw shopsError;
+   const activeShop=(adminShops||[]).find(shop=>shop.id===shopId);
+   if(activeShop?.name)$('shopLabel').textContent=activeShop.name;
+   else console.warn('La boutique active ne figure pas dans la liste des boutiques administrables.');
+  }catch(shopError){console.warn('Nom de boutique indisponible:',shopError.message||shopError);}
 
   const {data:cfg,error:ce}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(ce)throw ce;
   if(!(cfg.enabled_modules||[]).some(x=>['appointments','service_management'].includes(x)))throw new Error('Activez les modules Rendez-vous ou Catalogue de prestations dans les paramètres de cette boutique.');
