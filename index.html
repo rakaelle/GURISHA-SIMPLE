@@ -216,7 +216,7 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     });
     const {data:members,error:membershipError}=await authClient.from('shop_members').select('shop_id,role').eq('user_id',session.user.id);
     if(membershipError || !members || !members.length) throw new Error('Profil de boutique introuvable.');
-    const ownerMemberships=members.filter(m=>m.role==='owner');
+    const ownerMemberships=members.filter(m=>['admin','owner'].includes(m.role));
     let shops=[];
     if(ownerMemberships.length){
       const {data:ownedShops,error:shopsError}=await authClient.from('shops').select('id,name').order('created_at');
@@ -235,7 +235,7 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     window.GURISHA_ROLES=Array.isArray(staffRoles)&&staffRoles.length?staffRoles:[membership.role];
     window.GURISHA_SHOPS=shops;
     window.GURISHA_USER_ID=session.user.id;
-    if(membership.role==='owner'){
+    if(['admin','owner'].includes(membership.role)){
       document.getElementById('adminLink').hidden=false;
       const switcher=document.getElementById('shopSwitcher');switcher.hidden=false;switcher.style.display='flex';
       const select=document.getElementById('activeShopSelect');
@@ -291,7 +291,7 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     const canViewHistory=['owner','manager','gestionnaire'].includes(membership.role)||(window.GURISHA_ROLES||[]).includes('manager');
     if(!hasPos){document.getElementById('salesTabButton').hidden=true;document.getElementById('purchasesTabButton').hidden=true;}
     if(!canViewHistory){ document.getElementById('salesTabButton').hidden=true; document.getElementById('purchasesTabButton').hidden=true; }
-    if(!['owner','manager','gestionnaire'].includes(membership.role)) document.getElementById('fastFoodStockButton').hidden=true;
+    if(!['admin','owner','manager','gestionnaire'].includes(membership.role)) document.getElementById('fastFoodStockButton').hidden=true;
     if(!['owner','manager','gestionnaire'].includes(membership.role)) document.getElementById('fastFoodMenuButton').hidden=true;
     if(membership.role==='cashier'&&!(window.GURISHA_ROLES||[]).includes('manager')){
       document.getElementById('addCategoryButton').hidden=true;
