@@ -47,7 +47,7 @@ const definitions={
    }
   }
   let shopName='Mon établissement';
-  if(member.role==='owner'){const {data:s,error:se}=await db.from('shops').select('id,name').eq('id',shopId).maybeSingle();if(se)throw se;if(s&&s.name)shopName=s.name;}
+  if(['admin','owner'].includes(member.role)){const {data:s,error:se}=await db.from('shops').select('id,name').eq('id',shopId).maybeSingle();if(se)throw se;if(s&&s.name)shopName=s.name;}
   $('shopLabel').textContent=shopName;
   const {data:cfg,error}=await db.rpc('gurisha_get_shop_modules',{p_shop_id:shopId});if(error)throw error;
   const modules=cfg&&Array.isArray(cfg.enabled_modules)?cfg.enabled_modules:[];
