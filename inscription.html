@@ -13,7 +13,11 @@ button{width:100%;height:49px;border:0;border-radius:10px;background:var(--g);co
 .note{margin-top:16px;padding:12px;border-radius:9px;background:var(--soft);color:var(--gd);font-size:12px;line-height:1.5}.status{display:none;margin-top:14px;padding:12px;border-radius:9px;font-size:13px;line-height:1.5}.status.show{display:block}.status.ok{background:#e8f5ed;color:#126b42}.status.err{background:#fdeaea;color:#a52b35}
 .links{text-align:center;margin-top:17px;font-size:13px}.links a{color:var(--gd);font-weight:700;text-decoration:none}.foot{text-align:center;color:#829087;font-size:11px;margin-top:18px}
 @media(max-width:430px){.two{grid-template-columns:1fr}.card{padding:20px}}
-</style></head>
+</style>
+<meta name="theme-color" content="#198754">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/gurisha-icon.svg" type="image/svg+xml">
+</head>
 <body><div class="wrap">
 <div class="brand"><div class="logo">G</div><h1>GURISHA</h1><p>Création de l'espace de votre boutique</p></div>
 <main class="card"><h2>Créer le compte propriétaire</h2><p class="intro">Cette inscription permet au propriétaire de créer et de gérer l'espace GURISHA de sa boutique.</p>
@@ -61,4 +65,12 @@ form.addEventListener('submit',async function(e){
  }catch(err){showStatus('Impossible de créer le compte : '+(err.message||'erreur inconnue'),'err');}
  finally{btn.disabled=false;btn.textContent='Créer mon espace GURISHA';}
 });
-</script></body></html>
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(error => console.warn("GURISHA offline setup:", error));
+  });
+}
+</script>
+</body></html>
