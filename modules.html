@@ -35,10 +35,10 @@ const definitions={
   const activeKey='gurisha_active_shop_'+session.user.id;
   let shopId=localStorage.getItem(activeKey);if(!members.some(m=>m.shop_id===shopId))shopId=members[0].shop_id;
   const member=members.find(m=>m.shop_id===shopId);
-  if(member.role==='owner'){
+  if(['admin','owner'].includes(member.role)){
    const {data:ownedShops,error:shopsError}=await db.from('shops').select('id,name').order('created_at');
    if(shopsError)throw shopsError;
-   const own=(ownedShops||[]).filter(s=>members.some(m=>m.shop_id===s.id&&m.role==='owner'));
+   const own=(ownedShops||[]).filter(s=>members.some(m=>m.shop_id===s.id&&['admin','owner'].includes(m.role)));
    if(own.length>1){
     $('shopSwitchWrap').hidden=false;
     $('shopSwitch').innerHTML=own.map(s=>'<option value="'+s.id+'">'+String(s.name||'Boutique').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))+'</option>').join('');
