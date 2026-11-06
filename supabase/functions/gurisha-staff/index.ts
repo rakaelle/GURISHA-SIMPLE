@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
       const role = String(body.role || "");
       const pin = String(body.pin || "");
       if (name.length < 2 || name.length > 80) return json({ error: "Le nom doit contenir 2 à 80 caractères." }, 400);
-      if (!["manager", "cashier"].includes(role)) return json({ error: "Fonction invalide." }, 400);
+      if (!["manager", "cashier", "preparer"].includes(role)) return json({ error: "Fonction invalide." }, 400);
       if (!/^\d{6}$/.test(pin)) return json({ error: "Choisissez un code PIN de 6 chiffres." }, 400);
 
       const profileId = crypto.randomUUID();
