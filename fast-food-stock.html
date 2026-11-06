@@ -38,6 +38,7 @@ button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:point
   <button class="light" data-tab="ingredients">Ingrédients</button>
   <button class="light" data-tab="purchase">Enregistrer un achat</button>
   <button class="light" data-tab="movements">Mouvements</button>
+  <button class="light" data-tab="equipment">Matériels & équipements</button>
  </div>
  <section id="overview" class="panel">
   <div class="top"><h3 style="margin:0">État du stock cuisine</h3><button class="plain" id="refresh">↻ Actualiser</button></div>
@@ -80,6 +81,26 @@ button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:point
    <div class="formactions"><button class="green" type="submit">Enregistrer l'achat</button></div>
   </form>
  </section>
+
+ <section id="equipment" class="panel hidden">
+  <h3 style="margin-top:0">Matériels & équipements</h3>
+  <div class="notice">Cette rubrique suit les équipements réutilisables. Ils ne sont pas consommés ni déduits lors de la préparation des commandes. Le stock des ingrédients reste séparé.</div>
+  <form id="equipmentForm">
+   <div class="formgrid">
+    <div class="field"><label>Nom du matériel *</label><input name="name" required placeholder="Ex. Poêle, friteuse, couteau"></div>
+    <div class="field"><label>Catégorie</label><select name="category"><option>Cuisson</option><option>Préparation</option><option>Ustensiles</option><option>Service</option><option>Conservation</option><option>Nettoyage</option><option>Équipements électriques</option><option>Autres</option></select></div>
+    <div class="field"><label>Quantité totale *</label><input name="quantity_total" type="number" min="0" step="1" value="1" required></div>
+    <div class="field"><label>Quantité en bon état *</label><input name="quantity_usable" type="number" min="0" step="1" value="1" required></div>
+    <div class="field"><label>Date d'achat</label><input name="purchase_date" type="date"></div>
+    <div class="field"><label>Prix d'achat par unité (FBu)</label><input name="unit_cost" type="number" min="0" step="1" value="0"></div>
+    <div class="field"><label>Fournisseur</label><input name="supplier" placeholder="Nom du fournisseur"></div>
+    <div class="field"><label>Lieu de rangement</label><input name="storage_location" placeholder="Ex. Cuisine, réserve"></div>
+    <div class="field full"><label>Notes</label><textarea name="notes" placeholder="Marque, état, référence, entretien…"></textarea></div>
+   </div>
+   <div class="formactions"><button class="green" type="submit">Enregistrer le matériel</button></div>
+  </form>
+  <div id="equipmentList"><div class="empty">Chargement…</div></div>
+ </section>
  <section id="movements" class="panel hidden">
   <h3 style="margin-top:0">Historique des mouvements</h3><div id="movementList"><div class="empty">Chargement…</div></div>
  </section>
@@ -87,7 +108,7 @@ button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:point
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script>
-let db,shopId,userId,role,ingredients=[],lots=[],movements=[];
+let db,shopId,userId,role,ingredients=[],lots=[],movements=[],equipment=[];
 const $=id=>document.getElementById(id);
 const fmt=n=>Number(n||0).toLocaleString('fr-FR',{maximumFractionDigits:3});
 const money=n=>Number(n||0).toLocaleString('fr-FR')+' FBu';
@@ -102,7 +123,7 @@ async function loadAll(){
   db.from('fast_food_ingredient_lots').select('*').eq('shop_id',shopId).order('expiration_date',{ascending:true,nullsFirst:false})
  ]);
  if(ir.error)throw ir.error;if(lr.error)throw lr.error;
- ingredients=ir.data||[];lots=lr.data||[];
+ ingredients=ir.data||[];lots=lr.data||[];await loadEquipment();
  const total=ingredients.reduce((s,i)=>s+stockFor(i.id),0);
  const low=ingredients.filter(i=>stockFor(i.id)<=Number(i.minimum_stock||0)).length;
  const now=new Date();now.setHours(0,0,0,0);const limit=new Date(now);limit.setDate(limit.getDate()+30);
@@ -126,6 +147,18 @@ function renderStock(){
   return '<div class="group"><h3>'+esc(cat)+'</h3><div class="tablewrap"><table><thead><tr><th>Ingrédient</th><th>Stock disponible</th><th>Seuil d’alerte</th><th>Prochaine expiration</th><th>Lots actifs</th><th>Action</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
  }).join('');
 }
+async function loadEquipment(){
+ const {data,error}=await db.from('fast_food_equipment').select('*').eq('shop_id',shopId).order('category').order('name');
+ if(error)throw error;equipment=data||[];renderEquipment();
+}
+function renderEquipment(){
+ const rows=equipment.map(x=>{
+  const damaged=Number(x.quantity_total)-Number(x.quantity_usable);
+  const condition=damaged===0?'Tout en bon état':Number(x.quantity_usable)===0?'Aucun disponible':'Une partie à réparer';
+  return '<tr><td><strong>'+esc(x.name)+'</strong></td><td>'+esc(x.category)+'</td><td>'+x.quantity_total+'</td><td class="'+(damaged?'low':'good')+'">'+x.quantity_usable+'</td><td>'+damaged+'</td><td>'+condition+'</td><td>'+(x.purchase_date?esc(x.purchase_date):'—')+'</td><td>'+money(x.unit_cost)+'</td><td>'+esc(x.storage_location||'—')+'</td></tr>';
+ }).join('');
+ $('equipmentList').innerHTML=rows?'<div class="tablewrap"><table><thead><tr><th>Matériel</th><th>Catégorie</th><th>Qté totale</th><th>En bon état</th><th>À réparer / HS</th><th>État</th><th>Date achat</th><th>Prix unitaire</th><th>Rangement</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="empty">Aucun matériel enregistré. Ajoute tes premiers ustensiles et équipements ci-dessus.</div>';
+}
 function renderIngredients(){
  $('ingredientList').innerHTML='<h3>Ingrédients enregistrés</h3>'+(ingredients.length?'<div class="tablewrap"><table><thead><tr><th>Nom</th><th>Catégorie</th><th>Unité</th><th>Unité d’achat</th><th>Conversion</th><th>Stock actuel</th></tr></thead><tbody>'+ingredients.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+esc(i.category)+'</td><td>'+unitLabel(i.base_unit)+'</td><td>'+esc(i.purchase_unit)+'</td><td>'+fmt(i.default_conversion_factor)+'</td><td>'+fmt(stockFor(i.id))+' '+unitLabel(i.base_unit)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">Aucun ingrédient enregistré.</div>');
 }
@@ -147,6 +180,17 @@ $('ingredientForm').addEventListener('submit',async e=>{
  if(error){say('Enregistrement impossible : '+error.message,true);return;}
  f.reset();f.elements.default_conversion_factor.value='1';f.elements.minimum_stock.value='0';say('Ingrédient ajouté au stock Fast-Food.');await loadAll();
 });
+
+$('equipmentForm').addEventListener('submit',async e=>{
+ e.preventDefault();const f=e.currentTarget,fd=new FormData(f);
+ const total=Number(fd.get('quantity_total')),usable=Number(fd.get('quantity_usable'));
+ if(usable>total){say('La quantité en bon état ne peut pas dépasser la quantité totale.',true);return;}
+ const payload={shop_id:shopId,name:String(fd.get('name')).trim(),category:fd.get('category'),quantity_total:total,quantity_usable:usable,purchase_date:fd.get('purchase_date')||null,unit_cost:Number(fd.get('unit_cost')||0),supplier:String(fd.get('supplier')||'').trim()||null,storage_location:String(fd.get('storage_location')||'').trim()||null,notes:String(fd.get('notes')||'').trim()||null,created_by:userId};
+ const {error}=await db.from('fast_food_equipment').insert(payload);
+ if(error){say('Matériel non enregistré : '+error.message,true);return;}
+ f.reset();f.elements.quantity_total.value='1';f.elements.quantity_usable.value='1';f.elements.unit_cost.value='0';say('Matériel ajouté à l’inventaire Fast-Food.');await loadEquipment();
+});
+
 $('purchaseForm').addEventListener('submit',async e=>{
  e.preventDefault();const f=e.currentTarget,fd=new FormData(f),ingredient=ingredients.find(i=>i.id===fd.get('ingredient_id'));
  if(!ingredient){say('Choisis un ingrédient.',true);return;}
