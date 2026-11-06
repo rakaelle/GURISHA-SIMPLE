@@ -165,6 +165,7 @@ footer{text-align:center;padding:18px;color:#7a887f;font-size:12px}
 </div>
 <div class="field"><label>Prix d'achat unitaire (FBu)</label><input id="buyPrice" type="number" min="0" step="1" value="0" required></div>
 <div class="field"><label>Prix de vente unitaire (FBu)</label><input id="sellPrice" type="number" min="0" step="1" value="0" required></div>
+<div class="field"><label>Image ou vidéo de l’article</label><input id="productMedia" type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime" multiple><small class="sub">Ajoutez une ou plusieurs photos ou vidéos (50 Mo maximum par fichier).</small></div>
 <div class="hint">Le Lot A est consommé en premier. Quand il est épuisé, le Lot B devient automatiquement le Lot A.</div>
 <div class="buttons"><button type="button" class="gray" onclick="closeModal('productModal')">Annuler</button><button class="green">Enregistrer</button></div>
 </form></div></div>
@@ -403,15 +404,34 @@ document.getElementById('nSales').textContent=money(products.reduce((a,p)=>a+Num
 renderCaisse();
 }
 function openProduct(){editingId=null;document.getElementById('productForm').reset();document.getElementById('productTitle').textContent='Ajouter un article';fillCategories();['initial','lotA','lotB','buyPrice','sellPrice'].forEach(id=>document.getElementById(id).value=0);openModal('productModal');}
-function editProduct(id){if(isCashier()){alert('Seul le administrateur ou le gestionnaire peut modifier un article.');return;}const p=products.find(x=>x.id===id);if(!p)return;editingId=id;fillCategories();document.getElementById('productTitle').textContent='Modifier l’article';
+function editProduct(id){if(isCashier()){alert('Seul le administrateur ou le gestionnaire peut modifier un article.');return;}const p=products.find(x=>x.id===id);if(!p)return;editingId=id;fillCategories();document.getElementById('productTitle').textContent='Modifier l’article';document.getElementById('productMedia').value='';
 [['name','name'],['format','format'],['container','container'],['category','category'],['initial','initial'],['lotA','lotA'],['lotB','lotB'],['buyPrice','buyPrice'],['sellPrice','sellPrice']].forEach(pair=>document.getElementById(pair[0]).value=p[pair[1]]==null?'':p[pair[1]]);
 openModal('productModal');}
-document.getElementById('productForm').addEventListener('submit',e=>{
+async function uploadProductMedia(files){
+ const items=[];
+ for(const file of [...files]){
+  if(file.size>50*1024*1024)throw new Error('Un fichier dépasse 50 Mo.');
+  if(!file.type.startsWith('image/')&&!file.type.startsWith('video/'))throw new Error('Format de média non autorisé.');
+  const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path=window.GURISHA_SHOP_ID+'/products/'+crypto.randomUUID()+'.'+ext;
+  const {error}=await window.GURISHA_SUPABASE_CLIENT.storage.from('gurisha-catalog-media').upload(path,file,{contentType:file.type});
+  if(error)throw error;
+  const {data}=window.GURISHA_SUPABASE_CLIENT.storage.from('gurisha-catalog-media').getPublicUrl(path);
+  items.push({url:data.publicUrl,kind:file.type.startsWith('video/')?'video':'image',name:file.name});
+ }
+ return items;
+}
+document.getElementById('productForm').addEventListener('submit',async e=>{
 e.preventDefault();if(isCashier()&&editingId!==null){alert('Vous ne pouvez pas modifier un article existant.');return;}const v=id=>document.getElementById(id).value.trim(),n=id=>Number(document.getElementById(id).value);
 const name=v('name'),initial=isCashier()?0:n('initial'),a=isCashier()?0:n('lotA'),b=isCashier()?0:n('lotB'),buy=n('buyPrice'),sell=n('sellPrice');
 if(!name||![initial,a,b].every(x=>Number.isInteger(x)&&x>=0)||![buy,sell].every(x=>Number.isFinite(x)&&x>=0)){alert('Vérifiez le nom, les quantités et les prix. Les quantités des lots A et B doivent être des nombres entiers positifs ou nuls.');return;}
-const data={name:name,format:v('format'),container:v('container'),category:v('category'),initial:initial,lotA:a,lotB:b,buyPrice:buy,sellPrice:sell};
-if(editingId!==null){const p=products.find(x=>x.id===editingId);Object.assign(p,data);}else{products.push(Object.assign({id:Date.now(),sold:0,salesTotal:0},data));}
+const existing=editingId!==null?products.find(x=>x.id===editingId):null;
+let mediaItems=[...(existing?.media_items||[])];
+const files=document.getElementById('productMedia').files;
+if(files.length&&isCashier()){alert('L’ajout de photos et vidéos au catalogue est réservé au gestionnaire.');return;}
+try{if(files.length)mediaItems=mediaItems.concat(await uploadProductMedia(files));}catch(err){alert('Média non envoyé : '+err.message);return;}
+const data={name:name,format:v('format'),container:v('container'),category:v('category'),initial:initial,lotA:a,lotB:b,buyPrice:buy,sellPrice:sell,media_items:mediaItems};
+if(existing){Object.assign(existing,data);}else{products.push(Object.assign({id:Date.now(),sold:0,salesTotal:0},data));}
 save();render();closeModal('productModal');
 });
 function deleteProduct(id){if(isCashier()){alert('Seul le administrateur ou le gestionnaire peut supprimer un article.');return;}const p=products.find(x=>x.id===id);if(p&&confirm('Supprimer définitivement '+p.name+' ?')){products=products.filter(x=>x.id!==id);save();render();}}
