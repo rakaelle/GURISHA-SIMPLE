@@ -28,7 +28,7 @@ const definitions={
 };
 (async()=>{
  try{
-  const {data:{session}}=await db.auth.getSession();if(!session){location.replace('connexion.html');return;}
+  const {data:{session}}=await db.auth.getSession();if(!session){location.replace('connexion.html');return;}\n  const staffRoles=Array.isArray(session.user.user_metadata?.gurisha_roles)?session.user.user_metadata.gurisha_roles:[];
   const {data:members,error:merr}=await db.from('shop_members').select('shop_id,role').eq('user_id',session.user.id);if(merr)throw merr;
   if(!members||!members.length)throw new Error('Aucun établissement associé à ce compte.');
   const activeKey='gurisha_active_shop_'+session.user.id;
@@ -58,7 +58,7 @@ const definitions={
    const desc=document.createElement('p');desc.textContent=d.desc;
    const status=document.createElement('div');status.className='status';status.textContent=d.ready?'Disponible':'Mise en place progressive';
    const btn=document.createElement('button');btn.className=d.ready?'green':'light';btn.textContent=d.ready?'Ouvrir le module':'En préparation';btn.disabled=!d.ready;
-   if(d.ready)btn.addEventListener('click',()=>{const target=key==='fast_food'&&member.role==='cashier'?'fast-food-caisse.html':key==='fast_food'&&member.role==='preparer'?'preparateur.html':d.url;location.href=target;});
+   if(d.ready)btn.addEventListener('click',()=>{const salonEmployee=['appointments','service_management'].includes(key)&&staffRoles.some(r=>['hairdresser','beautician'].includes(r));const target=salonEmployee?'salon-employe.html':key==='fast_food'&&staffRoles.includes('cashier')?'fast-food-caisse.html':key==='fast_food'&&staffRoles.includes('preparer')?'preparateur.html':d.url;location.href=target;});
    card.append(title,desc,status,btn);grid.appendChild(card);
   });
   if(!grid.children.length)grid.innerHTML='<div class="empty">Aucun module n’est activé. Contactez le propriétaire de l’établissement pour configurer ses activités.</div>';
