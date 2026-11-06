@@ -85,6 +85,11 @@ Deno.serve(async (req) => {
       }
 
       const profile = profiles[0];
+      const effectiveRoles = Array.isArray(profile.roles) && profile.roles.length ? profile.roles : [profile.role];
+      const { error: metadataError } = await admin.auth.admin.updateUserById(profile.user_id, {
+        user_metadata: { gurisha_staff: true, shop_id: shopId, display_name: profile.display_name, gurisha_roles: effectiveRoles, gurisha_primary_role: profile.role }
+      });
+      if (metadataError) throw metadataError;
       const password = await hmacHex(pepper, `${shopId}|${profile.id}|${pin}`);
       const publicClient = createClient(url, anonKey, {
         auth: { autoRefreshToken: false, persistSession: false },
