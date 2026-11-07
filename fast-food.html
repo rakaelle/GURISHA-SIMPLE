@@ -16,18 +16,19 @@ button,a{font-family:inherit}.btn{display:inline-flex;align-items:center;justify
 .card{display:flex;flex-direction:column;gap:9px;padding:17px;background:#fff;border:1px solid var(--bd);border-radius:14px;box-shadow:0 3px 12px rgba(20,70,45,.04)}
 .card .emoji{font-size:27px}.card h3{margin:0;color:var(--gd);font-size:16px}.card p{margin:0 0 5px;color:#718078;font-size:12px;line-height:1.5}.card .btn{margin-top:auto}
 @media(max-width:600px){main{padding:12px}.top{align-items:flex-start}.grid{grid-template-columns:1fr}}
+
+.ff-toolbar{display:flex;flex-wrap:nowrap;gap:8px;margin:0 auto 15px;padding:3px 12px 11px;max-width:1100px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#c9dfd1 transparent}.ff-toolbar::-webkit-scrollbar{height:5px}.ff-toolbar::-webkit-scrollbar-thumb{background:#c9dfd1;border-radius:10px}.ff-toolbar a{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:39px;padding:9px 15px;border:1px solid #cfe2d6;border-radius:20px;background:#fff;color:#285b3c;font-size:12px;font-weight:800;text-decoration:none}.ff-toolbar a.active{background:#198754;border-color:#198754;color:#fff}.ff-toolbar a.shop-link{background:#e8f5ed;color:#126b42}@media(max-width:600px){.ff-toolbar{gap:7px;padding-left:10px;padding-right:10px}.ff-toolbar a{padding:9px 13px}}
 </style>
 </head>
 <body>
 <header><h1>GURISHA</h1><p>Espace Fast-Food</p></header>
+<nav class="ff-toolbar" aria-label="Navigation Fast-Food">
+<a href="fast-food-caisse.html">CAISSE</a><a href="fast-food-menu.html">MENUS</a><a href="fast-food-stock.html">STOCK</a><a href="preparateur.html">PRÉPARATION</a>
+<a class="shop-link" href="index.html">🏪 BOUTIQUE</a>
+</nav>
 <main>
-<div class="top"><div><h2>Gestion Fast-Food</h2><small>Choisis la rubrique à ouvrir.</small></div><button class="btn primary" type="button" onclick="location.href='index.html'">🏪 Boutique</button></div>
-<div class="grid">
-<section class="card"><div class="emoji">🧾</div><h3>Caisse Fast-Food</h3><p>Prendre les commandes, encaisser les clients et envoyer les commandes en cuisine.</p><a class="btn primary" href="fast-food-caisse.html">Ouvrir la caisse</a></section>
-<section class="card"><div class="emoji">🍔</div><h3>Menus & recettes</h3><p>Créer les plats, fixer les prix et définir les ingrédients utilisés.</p><a class="btn" href="fast-food-menu.html">Gérer les menus</a></section>
-<section class="card"><div class="emoji">📦</div><h3>Stock Fast-Food</h3><p>Gérer les ingrédients, les emballages et le matériel de préparation.</p><a class="btn" href="fast-food-stock.html">Gérer le stock</a></section>
-<section class="card"><div class="emoji">👩‍🍳</div><h3>Préparation</h3><p>Consulter les commandes envoyées en cuisine et suivre leur préparation.</p><a class="btn" href="preparateur.html">Espace préparateur</a></section>
-</div>
+<div class="top"><div><h2>Gestion Fast-Food</h2><small>Utilise les onglets ci-dessus pour passer d’une rubrique à l’autre.</small></div></div>
+<section class="card"><h3>Bienvenue dans l’espace Fast-Food</h3><p>Choisis Caisse, Menus, Stock ou Préparation dans la barre horizontale.</p></section>
 </main>
 </body>
 </html>
