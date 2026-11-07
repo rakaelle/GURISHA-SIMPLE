@@ -44,10 +44,16 @@ button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:point
 .empty strong{display:block;color:var(--dark);font-size:16px;margin-bottom:6px}
 .footer{text-align:center;color:var(--muted);font-size:11px;padding:15px}
 @media(max-width:480px){main{padding:10px}.order{padding:12px}.top h2{font-size:17px}.actions{flex-direction:column}}
+
+.ff-toolbar{display:flex;flex-wrap:nowrap;gap:8px;margin:0 auto 15px;padding:3px 12px 11px;max-width:1100px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#c9dfd1 transparent}.ff-toolbar::-webkit-scrollbar{height:5px}.ff-toolbar::-webkit-scrollbar-thumb{background:#c9dfd1;border-radius:10px}.ff-toolbar a{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:39px;padding:9px 15px;border:1px solid #cfe2d6;border-radius:20px;background:#fff;color:#285b3c;font-size:12px;font-weight:800;text-decoration:none}.ff-toolbar a.active{background:#198754;border-color:#198754;color:#fff}.ff-toolbar a.shop-link{background:#e8f5ed;color:#126b42}@media(max-width:600px){.ff-toolbar{gap:7px;padding-left:10px;padding-right:10px}.ff-toolbar a{padding:9px 13px}}
 </style>
 </head>
 <body>
 <header><h1>GURISHA</h1><p>Espace préparateur · Cuisine</p></header>
+<nav class="ff-toolbar" aria-label="Navigation Fast-Food">
+<a href="fast-food-caisse.html">CAISSE</a><a href="fast-food-menu.html">MENUS</a><a href="fast-food-stock.html">STOCK</a><a href="preparateur.html" class="active">PRÉPARATION</a>
+<a class="shop-link" href="index.html">🏪 BOUTIQUE</a>
+</nav>
 <main>
   <div class="top"><h2>Commandes à préparer</h2><button class="refresh" id="refreshBtn" type="button">↻ Actualiser</button></div>
   <div id="status" class="statusbox" role="status" aria-live="polite"></div>
