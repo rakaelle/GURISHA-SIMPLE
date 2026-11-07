@@ -275,8 +275,6 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     document.getElementById('addProductButton').hidden=!hasCommerce;
     document.getElementById('addCategoryButton').hidden=!hasCommerce;
     document.getElementById('exportButton').hidden=!hasCommerce;
-    document.getElementById('fastFoodStockButton').hidden=!hasFastFood;
-    document.getElementById('fastFoodMenuButton').hidden=!hasFastFood;
     document.getElementById('fastFoodCaisseButton').hidden=!hasFastFood;
     document.getElementById('constructionMaterialsButton').hidden=!hasConstruction;
     document.querySelector('.cards').hidden=!(hasCommerce||hasPos);
@@ -293,8 +291,6 @@ window.GURISHA_SUPABASE_CLIENT = authClient;
     const canViewHistory=['admin','owner','manager','gestionnaire'].includes(membership.role)||(window.GURISHA_ROLES||[]).includes('manager');
     if(!hasPos){document.getElementById('salesTabButton').hidden=true;document.getElementById('purchasesTabButton').hidden=true;}
     if(!canViewHistory){ document.getElementById('salesTabButton').hidden=true; document.getElementById('purchasesTabButton').hidden=true; }
-    if(!['admin','owner','manager','gestionnaire'].includes(membership.role)) document.getElementById('fastFoodStockButton').hidden=true;
-    if(!['admin','owner','manager','gestionnaire'].includes(membership.role)) document.getElementById('fastFoodMenuButton').hidden=true;
     if(membership.role==='cashier'&&!(window.GURISHA_ROLES||[]).includes('manager')){
       document.getElementById('addCategoryButton').hidden=true;
       document.getElementById('exportButton').hidden=true;
