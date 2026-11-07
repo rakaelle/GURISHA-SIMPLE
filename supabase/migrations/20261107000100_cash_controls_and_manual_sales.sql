@@ -6,7 +6,7 @@ alter table public.gurisha_sales alter column created_at set default clock_times
 
 -- Reconstituer les anciennes ventes du bouton « Vendre » qui avaient modifié le stock
 -- sans créer de ligne dans gurisha_sales. Les ventes POS déjà historisées sont soustraites.
-do $
+do $backfill$
 declare
   v_shop record;
   v_product jsonb;
@@ -71,7 +71,7 @@ begin
     end if;
   end loop;
 end;
-$;
+$backfill$;
 
 create table if not exists public.gurisha_cash_controls (
   id uuid primary key default gen_random_uuid(),
