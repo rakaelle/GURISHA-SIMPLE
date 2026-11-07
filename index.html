@@ -321,7 +321,7 @@ const defaultProducts=[
 {id:5,name:'Savon',format:'Unité',container:'Pièce',category:'HYGIÈNE',initial:15,lotA:15,lotB:0,sold:0,buyPrice:2000,sellPrice:3000,salesTotal:0}
 ];
 let categories=defaultCategories.slice(),products=defaultProducts.slice(),editingId=null,saleId=null,lotId=null;
-function isCashier(){return window.GURISHA_ROLE==='cashier';}
+function isCashier(){return ['cashier','caissier'].includes(window.GURISHA_ROLE);}
 let syncReady=false;
 let syncBusy=false;
 let localDirty=false;
