@@ -20,12 +20,18 @@ button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:point
 .empty{padding:25px;text-align:center;color:#718078}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:#fff}.field textarea{min-height:70px}.field.full{grid-column:1/-1}.formactions{display:flex;gap:8px;margin-top:12px}.formactions button{flex:1}
 .notice{padding:11px;border-radius:9px;background:var(--gl);color:var(--gd);font-size:12px;line-height:1.5;margin:10px 0}.error{background:#fdebed;color:#a52b35}.hidden{display:none!important}
 @media(max-width:560px){main{padding:10px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.top h2{font-size:18px}}
+
+.ff-toolbar{display:flex;flex-wrap:nowrap;gap:8px;margin:0 auto 15px;padding:3px 12px 11px;max-width:1100px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#c9dfd1 transparent}.ff-toolbar::-webkit-scrollbar{height:5px}.ff-toolbar::-webkit-scrollbar-thumb{background:#c9dfd1;border-radius:10px}.ff-toolbar a{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:39px;padding:9px 15px;border:1px solid #cfe2d6;border-radius:20px;background:#fff;color:#285b3c;font-size:12px;font-weight:800;text-decoration:none}.ff-toolbar a.active{background:#198754;border-color:#198754;color:#fff}.ff-toolbar a.shop-link{background:#e8f5ed;color:#126b42}@media(max-width:600px){.ff-toolbar{gap:7px;padding-left:10px;padding-right:10px}.ff-toolbar a{padding:9px 13px}}
 </style>
 </head>
 <body>
 <header><h1>GURISHA</h1><p>Gestion indépendante du stock Fast-Food</p></header>
+<nav class="ff-toolbar" aria-label="Navigation Fast-Food">
+<a href="fast-food-caisse.html">CAISSE</a><a href="fast-food-menu.html">MENUS</a><a href="fast-food-stock.html" class="active">STOCK</a><a href="preparateur.html">PRÉPARATION</a>
+<a class="shop-link" href="index.html">🏪 BOUTIQUE</a>
+</nav>
 <main>
- <div class="top"><div><h2 style="margin:0;color:var(--gd)">Stock Fast-Food</h2><small id="shopLabel">Chargement de la boutique…</small></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="light" onclick="location.href='fast-food.html'">← Fast-Food</button><button class="light" onclick="location.href='index.html'">🏪 Boutique</button></div></div>
+ <div class="top"><div><h2 style="margin:0;color:var(--gd)">Stock Fast-Food</h2><small id="shopLabel">Chargement de la boutique…</small></div></div>
  <div id="notice" class="notice hidden"></div>
  <div class="cards">
   <div class="card"><small>Ingrédients actifs</small><strong id="countIngredients">0</strong></div>
