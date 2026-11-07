@@ -128,13 +128,14 @@ document.getElementById('refreshBtn').addEventListener('click',loadOrders);
     client=window.supabase.createClient(window.GURISHA_SUPABASE_URL,window.GURISHA_SUPABASE_KEY);
     const {data:{session},error}=await client.auth.getSession();
     if(error||!session){location.replace('connexion.html');return;}
-    const staffShopId=session.user.user_metadata?.shop_id||null;
-    if(!staffShopId)throw new Error('Établissement introuvable. Demande à l’administrateur de vérifier ton compte.');
-    const {data:membership,error:memberError}=await client.from('shop_members').select('shop_id,role').eq('user_id',session.user.id).eq('shop_id',staffShopId).maybeSingle();
+    const {data:members,error:memberError}=await client.from('shop_members').select('shop_id,role').eq('user_id',session.user.id);
     if(memberError)throw memberError;
-    if(!membership)throw new Error('Aucun accès à cet établissement. Demande à l’administrateur de vérifier ton affectation.');
-    if(!['owner','manager','preparer'].includes(membership.role))throw new Error('Cet espace est réservé au propriétaire, au gestionnaire et au préparateur.');
-    shopId=membership.shop_id;
+    const valid=(members||[]).filter(m=>['owner','manager','gestionnaire','preparer'].includes(m.role));
+    if(!valid.length)throw new Error('Aucun établissement associé à ce compte avec un rôle autorisé. Demande à l’administrateur de vérifier ton affectation.');
+    const activeKey='gurisha_active_shop_'+session.user.id;
+    const saved=localStorage.getItem(activeKey);
+    const selected=valid.find(m=>m.shop_id===saved)||valid[0];
+    shopId=selected.shop_id;
     await loadOrders();
     setInterval(loadOrders,12000);
   }catch(err){message(err.message||'Impossible d’ouvrir cet espace.','err');ordersBox.innerHTML='<div class="empty"><strong>Accès indisponible</strong>Vérifie ton compte ou contacte l’administrateur.</div>';}
