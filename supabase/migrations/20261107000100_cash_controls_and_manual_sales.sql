@@ -4,6 +4,75 @@
 -- qui attendent le verrou de clôture d'être affectées à la mauvaise période.
 alter table public.gurisha_sales alter column created_at set default clock_timestamp();
 
+-- Reconstituer les anciennes ventes du bouton « Vendre » qui avaient modifié le stock
+-- sans créer de ligne dans gurisha_sales. Les ventes POS déjà historisées sont soustraites.
+do $
+declare
+  v_shop record;
+  v_product jsonb;
+  v_items jsonb;
+  v_item jsonb;
+  v_legacy_qty integer;
+  v_legacy_amount numeric(14,2);
+  v_total numeric(14,2);
+  v_sale_id uuid;
+begin
+  for v_shop in select shop_id,payload from public.gurisha_shop_data loop
+    v_items := '[]'::jsonb;
+    v_total := 0;
+
+    for v_product in
+      select value from jsonb_array_elements(coalesce(v_shop.payload->'products','[]'::jsonb))
+    loop
+      select
+        greatest(floor(coalesce((v_product->>'sold')::numeric,0) - coalesce((
+          select sum(i.quantity)::numeric
+            from public.gurisha_sale_items i
+            join public.gurisha_sales s on s.id=i.sale_id
+           where s.shop_id=v_shop.shop_id and i.product_id=v_product->>'id'
+        ),0)),0)::integer,
+        greatest(coalesce((v_product->>'salesTotal')::numeric,0) - coalesce((
+          select sum(i.line_total)
+            from public.gurisha_sale_items i
+            join public.gurisha_sales s on s.id=i.sale_id
+           where s.shop_id=v_shop.shop_id and i.product_id=v_product->>'id'
+        ),0),0)
+      into v_legacy_qty,v_legacy_amount;
+
+      if v_legacy_qty > 0 then
+        v_items := v_items || jsonb_build_array(jsonb_build_object(
+          'product_id',v_product->>'id',
+          'product_name',coalesce(v_product->>'name','Article'),
+          'product_format',v_product->>'format',
+          'quantity',v_legacy_qty,
+          'unit_price',v_legacy_amount/v_legacy_qty,
+          'line_total',v_legacy_amount
+        ));
+        v_total := v_total+v_legacy_amount;
+      end if;
+    end loop;
+
+    if jsonb_array_length(v_items)>0 then
+      v_sale_id := gen_random_uuid();
+      insert into public.gurisha_sales(id,shop_id,total_amount,cash_received,change_due)
+      values(v_sale_id,v_shop.shop_id,v_total,v_total,0);
+
+      for v_item in select value from jsonb_array_elements(v_items)
+      loop
+        insert into public.gurisha_sale_items(
+          sale_id,product_id,product_name,product_format,quantity,unit_price,line_total,
+          quantity_from_lot_a,quantity_from_lot_b
+        ) values (
+          v_sale_id,v_item->>'product_id',v_item->>'product_name',v_item->>'product_format',
+          (v_item->>'quantity')::integer,(v_item->>'unit_price')::numeric,
+          (v_item->>'line_total')::numeric,0,0
+        );
+      end loop;
+    end if;
+  end loop;
+end;
+$;
+
 create table if not exists public.gurisha_cash_controls (
   id uuid primary key default gen_random_uuid(),
   shop_id uuid not null references public.shops(id) on delete cascade,
