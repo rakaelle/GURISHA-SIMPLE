@@ -1,21 +1,42 @@
 (() => {
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    const button = document.getElementById('gurishaInstallHelp');
+    if (button) button.textContent = 'Installer GURISHA';
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    const banner = document.getElementById('gurishaInstallNotice');
+    if (banner) banner.hidden = true;
+  });
   function checkInstallStatus() {
     const role = window.GURISHA_ROLE;
     const installed = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     const banner = document.getElementById('gurishaInstallNotice');
     if (!banner || !role) return;
-    if (['cashier', 'manager', 'gestionnaire'].includes(role) && !installed) {
-      banner.hidden = false;
-    }
+    if (['cashier', 'manager', 'gestionnaire'].includes(role) && !installed) banner.hidden = false;
   }
   document.addEventListener('DOMContentLoaded', () => {
     const help = document.getElementById('gurishaInstallHelp');
     const later = document.getElementById('gurishaInstallLater');
-    if (help) help.addEventListener('click', () => {
-      alert('Sur Android : ouvrez le menu ⋮ de votre navigateur, puis choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ». Sur iPhone : utilisez Partager, puis « Sur l’écran d’accueil ».');
+    if (help) help.addEventListener('click', async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        if (choice && choice.outcome === 'accepted') {
+          const banner = document.getElementById('gurishaInstallNotice');
+          if (banner) banner.hidden = true;
+        }
+        return;
+      }
+      alert('L’installation directe n’est pas proposée par ce navigateur pour le moment. Sur Android, ouvrez le menu ⋮ puis choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ». Sur iPhone, utilisez Partager puis « Sur l’écran d’accueil ».');
     });
     if (later) later.addEventListener('click', () => {
-      document.getElementById('gurishaInstallNotice').hidden = true;
+      const banner = document.getElementById('gurishaInstallNotice');
+      if (banner) banner.hidden = true;
     });
     const wait = window.setInterval(() => {
       if (window.GURISHA_ROLE) {
