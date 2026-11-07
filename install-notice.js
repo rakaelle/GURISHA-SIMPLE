@@ -38,20 +38,12 @@
       help.addEventListener('click', async () => {
         // Lance directement la boîte de dialogue native Android/Chrome.
         if (deferredInstallPrompt) {
-          const installEvent = deferredInstallPrompt;
+          deferredInstallPrompt.prompt();
+          const choice = await deferredInstallPrompt.userChoice;
           deferredInstallPrompt = null;
-          help.disabled = true;
-          try {
-            await installEvent.prompt();
-            const choice = await installEvent.userChoice;
-            if (choice && choice.outcome === 'accepted') {
-              const banner = document.getElementById('gurishaInstallNotice');
-              if (banner) banner.hidden = true;
-            }
-          } catch (error) {
-            console.warn('GURISHA installation:', error);
-          } finally {
-            help.disabled = false;
+          if (choice && choice.outcome === 'accepted') {
+            const banner = document.getElementById('gurishaInstallNotice');
+            if (banner) banner.hidden = true;
           }
           return;
         }
