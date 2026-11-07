@@ -1,5 +1,8 @@
 -- GURISHA SIMPLE : ventes manuelles horodatées et contrôles périodiques de caisse.
 -- Les ventes du bouton « Vendre » et celles de la caisse POS alimentent le même historique.
+-- Utiliser l'heure réelle d'insertion, pas l'heure de début de transaction, pour éviter les ventes
+-- qui attendent le verrou de clôture d'être affectées à la mauvaise période.
+alter table public.gurisha_sales alter column created_at set default clock_timestamp();
 
 create table if not exists public.gurisha_cash_controls (
   id uuid primary key default gen_random_uuid(),
