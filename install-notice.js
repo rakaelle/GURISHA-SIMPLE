@@ -1,47 +1,79 @@
 (() => {
   let deferredInstallPrompt = null;
+
+  // Le navigateur prépare sa propre fenêtre d'installation.
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     deferredInstallPrompt = event;
     const button = document.getElementById('gurishaInstallHelp');
-    if (button) button.textContent = 'Installer GURISHA';
+    if (button) {
+      button.textContent = 'Installer GURISHA';
+      button.disabled = false;
+    }
   });
+
   window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
     const banner = document.getElementById('gurishaInstallNotice');
     if (banner) banner.hidden = true;
   });
+
   function checkInstallStatus() {
     const role = window.GURISHA_ROLE;
-    const installed = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const installed = window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
     const banner = document.getElementById('gurishaInstallNotice');
     if (!banner || !role) return;
-    if (['cashier', 'manager', 'gestionnaire'].includes(role) && !installed) banner.hidden = false;
+    if (['cashier', 'manager', 'gestionnaire'].includes(role) && !installed) {
+      banner.hidden = false;
+    }
   }
+
   document.addEventListener('DOMContentLoaded', () => {
     const help = document.getElementById('gurishaInstallHelp');
     const later = document.getElementById('gurishaInstallLater');
     const iphone = document.getElementById('gurishaInstallIphone');
-    if (help) help.addEventListener('click', async () => {
-      if (deferredInstallPrompt) {
-        deferredInstallPrompt.prompt();
-        const choice = await deferredInstallPrompt.userChoice;
-        deferredInstallPrompt = null;
-        if (choice && choice.outcome === 'accepted') {
-          const banner = document.getElementById('gurishaInstallNotice');
-          if (banner) banner.hidden = true;
+
+    if (help) {
+      help.addEventListener('click', async () => {
+        // Lance directement la boîte de dialogue native Android/Chrome.
+        if (deferredInstallPrompt) {
+          const installEvent = deferredInstallPrompt;
+          deferredInstallPrompt = null;
+          help.disabled = true;
+          try {
+            await installEvent.prompt();
+            const choice = await installEvent.userChoice;
+            if (choice && choice.outcome === 'accepted') {
+              const banner = document.getElementById('gurishaInstallNotice');
+              if (banner) banner.hidden = true;
+            }
+          } catch (error) {
+            console.warn('GURISHA installation:', error);
+          } finally {
+            help.disabled = false;
+          }
+          return;
         }
-        return;
-      }
-      alert('L’installation directe n’est pas proposée par ce navigateur pour le moment. Sur Android, ouvrez le menu ⋮ puis choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ». Sur iPhone, utilisez Partager puis « Sur l’écran d’accueil ».');
-    });
-    if (iphone) iphone.addEventListener('click', () => {
-      alert('Pour installer GURISHA sur iPhone :\n1. Ouvrez cette page dans Safari.\n2. Appuyez sur le bouton Partager (carré avec une flèche vers le haut).\n3. Faites défiler et choisissez « Sur l’écran d’accueil ».\n4. Appuyez sur « Ajouter ».');
-    });
-    if (later) later.addEventListener('click', () => {
-      const banner = document.getElementById('gurishaInstallNotice');
-      if (banner) banner.hidden = true;
-    });
+
+        // Aucun navigateur ne permet de forcer l'installation sans son autorisation.
+        alert('La fenêtre d’installation directe n’est pas disponible dans ce navigateur. Ouvrez GURISHA dans Chrome sur Android. Sur iPhone, l’ajout à l’écran d’accueil doit être confirmé depuis Safari.');
+      });
+    }
+
+    if (iphone) {
+      iphone.addEventListener('click', () => {
+        alert('Sur iPhone, Apple exige une confirmation : ouvrez GURISHA dans Safari, appuyez sur Partager, puis « Sur l’écran d’accueil » et « Ajouter ».');
+      });
+    }
+
+    if (later) {
+      later.addEventListener('click', () => {
+        const banner = document.getElementById('gurishaInstallNotice');
+        if (banner) banner.hidden = true;
+      });
+    }
+
     const wait = window.setInterval(() => {
       if (window.GURISHA_ROLE) {
         window.clearInterval(wait);
