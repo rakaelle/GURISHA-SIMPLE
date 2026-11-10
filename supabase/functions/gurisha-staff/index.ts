@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       const shopCode = String(body.shop_code || "").trim().toUpperCase();
       const name = String(body.name || "").trim();
       const pin = String(body.pin || "");
-      if (!/^[A-F0-9]{8}$/.test(shopCode) || !name || !/^\d{6}$/.test(pin)) {
+      if (!/^[A-Z0-9]{8}$/.test(shopCode) || !name || !/^\d{6}$/.test(pin)) {
         return json({ error: "Code boutique, nom et code PIN à 6 chiffres requis." }, 400);
       }
       const { data: shop, error: shopLookupError } = await admin
